@@ -12,7 +12,7 @@ import {
   Download,
   Image as ImageIcon,
   Trash2,
-  RefreshCw,
+  RotateCcw,
   Link,
   Type,
   Wifi,
@@ -20,6 +20,8 @@ import {
   Phone,
   MapPin,
   Calendar,
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 
 type QRType = 'url' | 'text' | 'wifi' | 'email' | 'phone' | 'location' | 'event';
@@ -80,11 +82,21 @@ const CORNER_DOT_STYLES: { value: CornerDotType; label: string }[] = [
   { value: 'dot', label: 'Dot' },
 ];
 
-const ERROR_CORRECTION_LEVELS: { value: ErrorCorrectionLevel; label: string; description: string }[] = [
-  { value: 'L', label: 'Low (7%)', description: 'Smallest QR code' },
-  { value: 'M', label: 'Medium (15%)', description: 'Balanced' },
-  { value: 'Q', label: 'Quartile (25%)', description: 'Good for logos' },
-  { value: 'H', label: 'High (30%)', description: 'Best for logos' },
+const ERROR_CORRECTION_LEVELS: { value: ErrorCorrectionLevel; label: string }[] = [
+  { value: 'L', label: 'Low' },
+  { value: 'M', label: 'Medium' },
+  { value: 'Q', label: 'Quartile' },
+  { value: 'H', label: 'High' },
+];
+
+// 50's inspired color presets
+const COLOR_PRESETS = [
+  { name: 'Classic', dot: '#333333', bg: '#FFFFFF', corner: '#333333' },
+  { name: 'Mint', dot: '#338570', bg: '#F0FAF7', corner: '#338570' },
+  { name: 'Coral', dot: '#D45A40', bg: '#FFF5F3', corner: '#D45A40' },
+  { name: 'Turquoise', dot: '#2F8795', bg: '#F0FAFB', corner: '#2F8795' },
+  { name: 'Mustard', dot: '#B8860B', bg: '#FFFBEB', corner: '#B8860B' },
+  { name: 'Charcoal', dot: '#1A1A1A', bg: '#F5E6C8', corner: '#1A1A1A' },
 ];
 
 export function QRCodeGenerator() {
@@ -121,21 +133,25 @@ export function QRCodeGenerator() {
   });
 
   // Styling Options
-  const [size, setSize] = useState(300);
+  const [size, setSize] = useState(280);
   const [margin, setMargin] = useState(10);
-  const [dotColor, setDotColor] = useState('#000000');
+  const [dotColor, setDotColor] = useState('#333333');
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [dotType, setDotType] = useState<DotType>('square');
   const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('square');
   const [cornerDotType, setCornerDotType] = useState<CornerDotType>('square');
-  const [cornerSquareColor, setCornerSquareColor] = useState('#000000');
-  const [cornerDotColor, setCornerDotColor] = useState('#000000');
+  const [cornerSquareColor, setCornerSquareColor] = useState('#333333');
+  const [cornerDotColor, setCornerDotColor] = useState('#333333');
   const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<ErrorCorrectionLevel>('M');
 
   // Logo
   const [logo, setLogo] = useState<string | null>(null);
-  const [logoSize, setLogoSize] = useState(0.4);
+  const [logoSize, setLogoSize] = useState(0.35);
   const [logoMargin, setLogoMargin] = useState(5);
+
+  // UI State
+  const [activeSection, setActiveSection] = useState<string | null>('type');
+  const [isFloating, setIsFloating] = useState(true);
 
   // Generate QR data based on type
   const generateQRData = useCallback((): string => {
@@ -278,6 +294,8 @@ END:VEVENT`;
       const reader = new FileReader();
       reader.onload = (e) => {
         setLogo(e.target?.result as string);
+        // Auto-enable high error correction when logo is added
+        setErrorCorrectionLevel('H');
       };
       reader.readAsDataURL(file);
     }
@@ -293,267 +311,190 @@ END:VEVENT`;
   const downloadQRCode = (format: 'png' | 'svg' | 'jpeg') => {
     if (qrCode.current) {
       qrCode.current.download({
-        name: `qrcode-${Date.now()}`,
+        name: `qr-studio-${Date.now()}`,
         extension: format,
       });
     }
   };
 
   const resetToDefaults = () => {
-    setSize(300);
+    setSize(280);
     setMargin(10);
-    setDotColor('#000000');
+    setDotColor('#333333');
     setBackgroundColor('#ffffff');
     setDotType('square');
     setCornerSquareType('square');
     setCornerDotType('square');
-    setCornerSquareColor('#000000');
-    setCornerDotColor('#000000');
+    setCornerSquareColor('#333333');
+    setCornerDotColor('#333333');
     setErrorCorrectionLevel('M');
     setLogo(null);
-    setLogoSize(0.4);
+    setLogoSize(0.35);
     setLogoMargin(5);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  const applyColorPreset = (preset: typeof COLOR_PRESETS[0]) => {
+    setDotColor(preset.dot);
+    setBackgroundColor(preset.bg);
+    setCornerSquareColor(preset.corner);
+    setCornerDotColor(preset.corner);
+  };
+
+  const toggleSection = (section: string) => {
+    setActiveSection(activeSection === section ? null : section);
+  };
+
   const renderDataInput = () => {
+    const inputClass = "w-full bg-white text-charcoal placeholder-charcoal/40";
+
     switch (qrType) {
       case 'url':
         return (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-              URL
-            </label>
-            <input
-              type="url"
-              value={urlData}
-              onChange={(e) => setUrlData(e.target.value)}
-              placeholder="https://example.com"
-              className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-            />
-          </div>
+          <input
+            type="url"
+            value={urlData}
+            onChange={(e) => setUrlData(e.target.value)}
+            placeholder="https://example.com"
+            className={inputClass}
+          />
         );
       case 'text':
         return (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-              Text
-            </label>
-            <textarea
-              value={textData}
-              onChange={(e) => setTextData(e.target.value)}
-              placeholder="Enter your text here..."
-              rows={3}
-              className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all resize-none"
-            />
-          </div>
+          <textarea
+            value={textData}
+            onChange={(e) => setTextData(e.target.value)}
+            placeholder="Enter your text..."
+            rows={3}
+            className={`${inputClass} resize-none`}
+          />
         );
       case 'phone':
         return (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              value={phoneData}
-              onChange={(e) => setPhoneData(e.target.value)}
-              placeholder="+1 234 567 8900"
-              className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-            />
-          </div>
+          <input
+            type="tel"
+            value={phoneData}
+            onChange={(e) => setPhoneData(e.target.value)}
+            placeholder="+1 234 567 8900"
+            className={inputClass}
+          />
         );
       case 'wifi':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Network Name (SSID)
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={wifiData.ssid}
+              onChange={(e) => setWifiData({ ...wifiData, ssid: e.target.value })}
+              placeholder="Network name (SSID)"
+              className={inputClass}
+            />
+            <input
+              type="password"
+              value={wifiData.password}
+              onChange={(e) => setWifiData({ ...wifiData, password: e.target.value })}
+              placeholder="Password"
+              className={inputClass}
+            />
+            <div className="flex gap-3">
+              <select
+                value={wifiData.encryption}
+                onChange={(e) => setWifiData({ ...wifiData, encryption: e.target.value as 'WPA' | 'WEP' | 'nopass' })}
+                className={`flex-1 ${inputClass}`}
+              >
+                <option value="WPA">WPA/WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">None</option>
+              </select>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={wifiData.hidden}
+                  onChange={(e) => setWifiData({ ...wifiData, hidden: e.target.checked })}
+                />
+                <span className="text-sm text-charcoal">Hidden</span>
               </label>
-              <input
-                type="text"
-                value={wifiData.ssid}
-                onChange={(e) => setWifiData({ ...wifiData, ssid: e.target.value })}
-                placeholder="My WiFi Network"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={wifiData.password}
-                onChange={(e) => setWifiData({ ...wifiData, password: e.target.value })}
-                placeholder="WiFi password"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              />
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  Encryption
-                </label>
-                <select
-                  value={wifiData.encryption}
-                  onChange={(e) => setWifiData({ ...wifiData, encryption: e.target.value as 'WPA' | 'WEP' | 'nopass' })}
-                  className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                >
-                  <option value="WPA">WPA/WPA2</option>
-                  <option value="WEP">WEP</option>
-                  <option value="nopass">None</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={wifiData.hidden}
-                    onChange={(e) => setWifiData({ ...wifiData, hidden: e.target.checked })}
-                    className="w-5 h-5 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-slate-700 dark:text-gray-300">Hidden Network</span>
-                </label>
-              </div>
             </div>
           </div>
         );
       case 'email':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={emailData.address}
-                onChange={(e) => setEmailData({ ...emailData, address: e.target.value })}
-                placeholder="email@example.com"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Subject (optional)
-              </label>
-              <input
-                type="text"
-                value={emailData.subject}
-                onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
-                placeholder="Email subject"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Body (optional)
-              </label>
-              <textarea
-                value={emailData.body}
-                onChange={(e) => setEmailData({ ...emailData, body: e.target.value })}
-                placeholder="Email body"
-                rows={3}
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all resize-none"
-              />
-            </div>
+          <div className="space-y-3">
+            <input
+              type="email"
+              value={emailData.address}
+              onChange={(e) => setEmailData({ ...emailData, address: e.target.value })}
+              placeholder="email@example.com"
+              className={inputClass}
+            />
+            <input
+              type="text"
+              value={emailData.subject}
+              onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
+              placeholder="Subject (optional)"
+              className={inputClass}
+            />
+            <textarea
+              value={emailData.body}
+              onChange={(e) => setEmailData({ ...emailData, body: e.target.value })}
+              placeholder="Message (optional)"
+              rows={2}
+              className={`${inputClass} resize-none`}
+            />
           </div>
         );
       case 'location':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Latitude
-              </label>
-              <input
-                type="text"
-                value={locationData.latitude}
-                onChange={(e) => setLocationData({ ...locationData, latitude: e.target.value })}
-                placeholder="40.7128"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Longitude
-              </label>
-              <input
-                type="text"
-                value={locationData.longitude}
-                onChange={(e) => setLocationData({ ...locationData, longitude: e.target.value })}
-                placeholder="-74.0060"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={locationData.latitude}
+              onChange={(e) => setLocationData({ ...locationData, latitude: e.target.value })}
+              placeholder="Latitude"
+              className={inputClass}
+            />
+            <input
+              type="text"
+              value={locationData.longitude}
+              onChange={(e) => setLocationData({ ...locationData, longitude: e.target.value })}
+              placeholder="Longitude"
+              className={inputClass}
+            />
           </div>
         );
       case 'event':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Event Title
-              </label>
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={eventData.title}
+              onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
+              placeholder="Event title"
+              className={inputClass}
+            />
+            <div className="grid grid-cols-2 gap-3">
               <input
-                type="text"
-                value={eventData.title}
-                onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
-                placeholder="Meeting"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                type="datetime-local"
+                value={eventData.startDate}
+                onChange={(e) => setEventData({ ...eventData, startDate: e.target.value })}
+                className={inputClass}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  Start Date/Time
-                </label>
-                <input
-                  type="datetime-local"
-                  value={eventData.startDate}
-                  onChange={(e) => setEventData({ ...eventData, startDate: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  End Date/Time
-                </label>
-                <input
-                  type="datetime-local"
-                  value={eventData.endDate}
-                  onChange={(e) => setEventData({ ...eventData, endDate: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Location
-              </label>
               <input
-                type="text"
-                value={eventData.location}
-                onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
-                placeholder="123 Main St"
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                type="datetime-local"
+                value={eventData.endDate}
+                onChange={(e) => setEventData({ ...eventData, endDate: e.target.value })}
+                className={inputClass}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Description
-              </label>
-              <textarea
-                value={eventData.description}
-                onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
-                placeholder="Event description..."
-                rows={2}
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all resize-none"
-              />
-            </div>
+            <input
+              type="text"
+              value={eventData.location}
+              onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
+              placeholder="Location"
+              className={inputClass}
+            />
           </div>
         );
       default:
@@ -561,313 +502,355 @@ END:VEVENT`;
     }
   };
 
+  const SectionHeader = ({ title, section, icon }: { title: string; section: string; icon: React.ReactNode }) => (
+    <button
+      onClick={() => toggleSection(section)}
+      className="w-full flex items-center justify-between py-3 text-left group"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-coral">{icon}</span>
+        <span className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm">{title}</span>
+      </div>
+      <ChevronDown
+        className={`w-4 h-4 text-charcoal/50 transition-transform ${activeSection === section ? 'rotate-180' : ''}`}
+      />
+    </button>
+  );
+
   return (
-    <div className="grid lg:grid-cols-2 gap-8">
+    <div className="grid lg:grid-cols-5 gap-8">
       {/* Left Panel - Controls */}
-      <div className="space-y-6">
-        {/* QR Type Selection */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">QR Code Type</h3>
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-            {QR_TYPES.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => setQrType(type.value)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                  qrType === type.value
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                    : 'border-slate-200 dark:border-gray-600 hover:border-slate-300 dark:hover:border-gray-500 text-slate-600 dark:text-gray-400'
-                }`}
-              >
-                {type.icon}
-                <span className="text-xs font-medium">{type.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Data Input */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Content</h3>
-          {renderDataInput()}
-        </div>
-
-        {/* Styling Options */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Styling</h3>
-            <button
-              onClick={resetToDefaults}
-              className="flex items-center gap-2 text-sm text-slate-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Reset
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {/* Size and Margin */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  Size: {size}px
-                </label>
-                <input
-                  type="range"
-                  min="100"
-                  max="500"
-                  value={size}
-                  onChange={(e) => setSize(Number(e.target.value))}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  Margin: {margin}px
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  value={margin}
-                  onChange={(e) => setMargin(Number(e.target.value))}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* Colors */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-3">
-                Colors
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-gray-400 mb-1">Dots</label>
-                  <input
-                    type="color"
-                    value={dotColor}
-                    onChange={(e) => setDotColor(e.target.value)}
-                    className="w-full h-10 rounded-lg cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-gray-400 mb-1">Background</label>
-                  <input
-                    type="color"
-                    value={backgroundColor}
-                    onChange={(e) => setBackgroundColor(e.target.value)}
-                    className="w-full h-10 rounded-lg cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-gray-400 mb-1">Corner Square</label>
-                  <input
-                    type="color"
-                    value={cornerSquareColor}
-                    onChange={(e) => setCornerSquareColor(e.target.value)}
-                    className="w-full h-10 rounded-lg cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 dark:text-gray-400 mb-1">Corner Dot</label>
-                  <input
-                    type="color"
-                    value={cornerDotColor}
-                    onChange={(e) => setCornerDotColor(e.target.value)}
-                    className="w-full h-10 rounded-lg cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Dot Style */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Dot Style
-              </label>
-              <select
-                value={dotType}
-                onChange={(e) => setDotType(e.target.value as DotType)}
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              >
-                {DOT_STYLES.map((style) => (
-                  <option key={style.value} value={style.value}>
-                    {style.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Corner Styles */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  Corner Square Style
-                </label>
-                <select
-                  value={cornerSquareType}
-                  onChange={(e) => setCornerSquareType(e.target.value as CornerSquareType)}
-                  className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                >
-                  {CORNER_SQUARE_STYLES.map((style) => (
-                    <option key={style.value} value={style.value}>
-                      {style.label}
-                    </option>
+      <div className="lg:col-span-2 space-y-0">
+        <div className="card-retro divide-y-2 divide-charcoal">
+          {/* Type Selection */}
+          <div className="pb-4">
+            <SectionHeader title="Type" section="type" icon={<Link className="w-4 h-4" />} />
+            {activeSection === 'type' && (
+              <div className="pt-2">
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                  {QR_TYPES.map((type) => (
+                    <button
+                      key={type.value}
+                      onClick={() => setQrType(type.value)}
+                      className={`flex flex-col items-center gap-1 p-2 border-2 transition-all ${
+                        qrType === type.value
+                          ? 'border-coral bg-coral/10 text-coral'
+                          : 'border-charcoal/20 hover:border-charcoal/40 text-charcoal/60'
+                      }`}
+                    >
+                      {type.icon}
+                      <span className="text-xs font-medium">{type.label}</span>
+                    </button>
                   ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                  Corner Dot Style
-                </label>
-                <select
-                  value={cornerDotType}
-                  onChange={(e) => setCornerDotType(e.target.value as CornerDotType)}
-                  className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-                >
-                  {CORNER_DOT_STYLES.map((style) => (
-                    <option key={style.value} value={style.value}>
-                      {style.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Error Correction */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                Error Correction Level
-              </label>
-              <select
-                value={errorCorrectionLevel}
-                onChange={(e) => setErrorCorrectionLevel(e.target.value as ErrorCorrectionLevel)}
-                className="w-full px-4 py-3 border border-slate-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
-              >
-                {ERROR_CORRECTION_LEVELS.map((level) => (
-                  <option key={level.value} value={level.value}>
-                    {level.label} - {level.description}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Logo Upload */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Logo</h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="hidden"
-                id="logo-upload"
-              />
-              <label
-                htmlFor="logo-upload"
-                className="flex items-center gap-2 px-4 py-3 bg-slate-100 dark:bg-gray-700 hover:bg-slate-200 dark:hover:bg-gray-600 rounded-xl cursor-pointer transition-colors"
-              >
-                <ImageIcon className="w-5 h-5 text-slate-600 dark:text-gray-400" />
-                <span className="text-sm font-medium text-slate-700 dark:text-gray-300">
-                  {logo ? 'Change Logo' : 'Upload Logo'}
-                </span>
-              </label>
-              {logo && (
-                <button
-                  onClick={removeLogo}
-                  className="flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  <span className="text-sm font-medium">Remove</span>
-                </button>
-              )}
-            </div>
-
-            {logo && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                    Logo Size: {Math.round(logoSize * 100)}%
-                  </label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="0.5"
-                    step="0.05"
-                    value={logoSize}
-                    onChange={(e) => setLogoSize(Number(e.target.value))}
-                    className="w-full"
-                  />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
-                    Logo Margin: {logoMargin}px
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={logoMargin}
-                    onChange={(e) => setLogoMargin(Number(e.target.value))}
-                    className="w-full"
-                  />
+                <div className="mt-4">
+                  {renderDataInput()}
                 </div>
               </div>
             )}
+          </div>
 
-            <p className="text-xs text-slate-500 dark:text-gray-400">
-              Tip: Use High error correction level when adding a logo for better scan reliability.
-            </p>
+          {/* Colors */}
+          <div className="py-4">
+            <SectionHeader title="Colors" section="colors" icon={<Sparkles className="w-4 h-4" />} />
+            {activeSection === 'colors' && (
+              <div className="pt-2 space-y-4">
+                {/* Color Presets */}
+                <div className="flex flex-wrap gap-2">
+                  {COLOR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.name}
+                      onClick={() => applyColorPreset(preset)}
+                      className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider border-2 border-charcoal hover:bg-charcoal hover:text-cream transition-colors"
+                      style={{ backgroundColor: preset.bg, color: preset.dot }}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Colors */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">Dots</label>
+                    <input
+                      type="color"
+                      value={dotColor}
+                      onChange={(e) => setDotColor(e.target.value)}
+                      className="w-full h-10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">Background</label>
+                    <input
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      className="w-full h-10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">Corners</label>
+                    <input
+                      type="color"
+                      value={cornerSquareColor}
+                      onChange={(e) => {
+                        setCornerSquareColor(e.target.value);
+                        setCornerDotColor(e.target.value);
+                      }}
+                      className="w-full h-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Style */}
+          <div className="py-4">
+            <SectionHeader title="Style" section="style" icon={<Type className="w-4 h-4" />} />
+            {activeSection === 'style' && (
+              <div className="pt-2 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                    Dot Style
+                  </label>
+                  <select
+                    value={dotType}
+                    onChange={(e) => setDotType(e.target.value as DotType)}
+                    className="w-full bg-white text-charcoal"
+                  >
+                    {DOT_STYLES.map((style) => (
+                      <option key={style.value} value={style.value}>
+                        {style.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                      Corner Square
+                    </label>
+                    <select
+                      value={cornerSquareType}
+                      onChange={(e) => setCornerSquareType(e.target.value as CornerSquareType)}
+                      className="w-full bg-white text-charcoal"
+                    >
+                      {CORNER_SQUARE_STYLES.map((style) => (
+                        <option key={style.value} value={style.value}>
+                          {style.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                      Corner Dot
+                    </label>
+                    <select
+                      value={cornerDotType}
+                      onChange={(e) => setCornerDotType(e.target.value as CornerDotType)}
+                      className="w-full bg-white text-charcoal"
+                    >
+                      {CORNER_DOT_STYLES.map((style) => (
+                        <option key={style.value} value={style.value}>
+                          {style.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                    Size: {size}px
+                  </label>
+                  <input
+                    type="range"
+                    min="150"
+                    max="400"
+                    value={size}
+                    onChange={(e) => setSize(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                    Error Correction
+                  </label>
+                  <div className="flex gap-2">
+                    {ERROR_CORRECTION_LEVELS.map((level) => (
+                      <button
+                        key={level.value}
+                        onClick={() => setErrorCorrectionLevel(level.value)}
+                        className={`flex-1 py-2 text-xs font-semibold uppercase border-2 transition-all ${
+                          errorCorrectionLevel === level.value
+                            ? 'border-coral bg-coral text-white'
+                            : 'border-charcoal/20 hover:border-charcoal/40 text-charcoal/60'
+                        }`}
+                      >
+                        {level.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Logo Fusion */}
+          <div className="py-4">
+            <SectionHeader title="Logo Fusion" section="logo" icon={<ImageIcon className="w-4 h-4" />} />
+            {activeSection === 'logo' && (
+              <div className="pt-2 space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <label
+                    htmlFor="logo-upload"
+                    className="btn-retro flex-1 bg-mint text-charcoal text-sm"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    {logo ? 'Change' : 'Upload'}
+                  </label>
+                  {logo && (
+                    <button
+                      onClick={removeLogo}
+                      className="btn-retro bg-coral text-white text-sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {logo && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                        Logo Size: {Math.round(logoSize * 100)}%
+                      </label>
+                      <input
+                        type="range"
+                        min="0.15"
+                        max="0.5"
+                        step="0.05"
+                        value={logoSize}
+                        onChange={(e) => setLogoSize(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                        Logo Margin: {logoMargin}px
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="20"
+                        value={logoMargin}
+                        onChange={(e) => setLogoMargin(Number(e.target.value))}
+                        className="w-full"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <p className="text-xs text-charcoal/50">
+                  {logo ? 'Logo fusion active - your brand emerges from the code' : 'Add your logo to create a unified 3D QR experience'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Reset */}
+          <div className="pt-4">
+            <button
+              onClick={resetToDefaults}
+              className="flex items-center gap-2 text-sm font-semibold text-charcoal/50 hover:text-coral transition-colors uppercase tracking-wider"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset All
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Right Panel - Preview and Download */}
-      <div className="lg:sticky lg:top-24 h-fit space-y-6">
-        {/* QR Preview */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6 text-center">Preview</h3>
-          <div className="flex justify-center">
-            <div
-              ref={qrRef}
-              className="rounded-xl overflow-hidden shadow-inner bg-slate-50 dark:bg-gray-700 p-4"
-            />
+      {/* Right Panel - 3D Preview and Download */}
+      <div className="lg:col-span-3 lg:sticky lg:top-24 h-fit space-y-6">
+        {/* 3D QR Preview */}
+        <div className="card-retro">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm">Preview</h3>
+            <button
+              onClick={() => setIsFloating(!isFloating)}
+              className={`text-xs font-semibold uppercase tracking-wider px-3 py-1 border-2 transition-all ${
+                isFloating
+                  ? 'border-coral bg-coral text-white'
+                  : 'border-charcoal/20 text-charcoal/50 hover:border-charcoal/40'
+              }`}
+            >
+              3D Float
+            </button>
           </div>
+
+          {/* 3D Container */}
+          <div className="qr-3d-container flex justify-center py-8">
+            <div className={`qr-3d-wrapper ${isFloating ? 'qr-floating' : ''}`}>
+              <div className="qr-3d-face p-4">
+                <div ref={qrRef} className="relative" />
+                {/* Logo Fusion Overlay Effect */}
+                {logo && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-white/20" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Download hint */}
+          <p className="text-center text-xs text-charcoal/40 uppercase tracking-widest">
+            Hover to interact
+          </p>
         </div>
 
         {/* Download Options */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Download</h3>
+        <div className="card-retro">
+          <h3 className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm mb-4">Export</h3>
           <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => downloadQRCode('png')}
-              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+              className="btn-retro bg-mint text-charcoal flex-col py-4"
             >
-              <Download className="w-6 h-6" />
-              <span className="text-sm font-semibold">PNG</span>
+              <Download className="w-5 h-5" />
+              <span className="text-xs mt-1">PNG</span>
             </button>
             <button
               onClick={() => downloadQRCode('svg')}
-              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-xl transition-all shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+              className="btn-retro bg-turquoise text-charcoal flex-col py-4"
             >
-              <Download className="w-6 h-6" />
-              <span className="text-sm font-semibold">SVG</span>
+              <Download className="w-5 h-5" />
+              <span className="text-xs mt-1">SVG</span>
             </button>
             <button
               onClick={() => downloadQRCode('jpeg')}
-              className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+              className="btn-retro bg-coral text-white flex-col py-4"
             >
-              <Download className="w-6 h-6" />
-              <span className="text-sm font-semibold">JPEG</span>
+              <Download className="w-5 h-5" />
+              <span className="text-xs mt-1">JPEG</span>
             </button>
           </div>
-          <p className="text-xs text-slate-500 dark:text-gray-400 mt-4 text-center">
-            SVG recommended for print, PNG for web use
+          <p className="text-xs text-charcoal/40 mt-4 text-center uppercase tracking-wider">
+            SVG for print &bull; PNG for web
           </p>
         </div>
       </div>

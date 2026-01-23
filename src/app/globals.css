@@ -3,90 +3,317 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 250, 250, 250;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 17, 24, 39;
-    --background-end-rgb: 31, 41, 55;
-  }
+  --cream: #F5E6C8;
+  --mint: #7DD2B7;
+  --coral: #E8765C;
+  --turquoise: #52C3D3;
+  --charcoal: #333333;
+  --mustard: #D4A017;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background-color: var(--cream);
+  color: var(--charcoal);
   min-height: 100vh;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Ultra Minimalist Selection */
+::selection {
+  background-color: var(--mint);
+  color: var(--charcoal);
 }
 
-/* Custom scrollbar */
+/* Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  background: var(--charcoal);
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: var(--coral);
 }
 
-/* Form input styling */
+/* 3D QR Code Container */
+.qr-3d-container {
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.qr-3d-wrapper {
+  transform-style: preserve-3d;
+  transform: rotateX(12deg) rotateY(-8deg);
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.qr-3d-wrapper:hover {
+  transform: rotateX(0deg) rotateY(0deg) scale(1.05);
+}
+
+/* 3D QR Cube Effect - Creates depth illusion */
+.qr-3d-face {
+  position: relative;
+  background: white;
+  border: 3px solid var(--charcoal);
+}
+
+.qr-3d-face::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: -11px;
+  width: 8px;
+  height: 100%;
+  background: linear-gradient(to left, rgba(51,51,51,0.15), rgba(51,51,51,0.05));
+  transform: skewY(-45deg);
+  transform-origin: top right;
+}
+
+.qr-3d-face::after {
+  content: '';
+  position: absolute;
+  bottom: -11px;
+  left: 8px;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(to bottom, rgba(51,51,51,0.15), rgba(51,51,51,0.05));
+  transform: skewX(-45deg);
+  transform-origin: top left;
+}
+
+/* Logo Fusion Effect - Makes logo appear embedded in QR */
+.logo-fusion-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(20px);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.qr-3d-wrapper:hover .logo-fusion-container {
+  transform: translate(-50%, -50%) translateZ(40px);
+}
+
+/* Floating Animation for QR */
+@keyframes qr-float {
+  0%, 100% {
+    transform: rotateX(12deg) rotateY(-8deg) translateY(0);
+  }
+  50% {
+    transform: rotateX(12deg) rotateY(-8deg) translateY(-12px);
+  }
+}
+
+.qr-floating {
+  animation: qr-float 6s ease-in-out infinite;
+}
+
+/* Retro Form Inputs */
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  background-color: white;
+  border: 2px solid var(--charcoal);
+  border-radius: 0;
+  padding: 12px 16px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-shadow: 4px 4px 0px 0px var(--charcoal);
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 4px 4px 0px 0px var(--coral);
+}
+
+/* Retro Color Picker */
 input[type="color"] {
   -webkit-appearance: none;
-  border: none;
+  appearance: none;
+  border: 2px solid var(--charcoal);
+  border-radius: 0;
   cursor: pointer;
+  box-shadow: 3px 3px 0px 0px var(--charcoal);
+  transition: all 0.2s ease;
+}
+
+input[type="color"]:hover {
+  box-shadow: 4px 4px 0px 0px var(--coral);
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {
-  padding: 0;
+  padding: 2px;
 }
 
 input[type="color"]::-webkit-color-swatch {
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
 }
 
-/* Range slider styling */
+/* Retro Range Slider */
 input[type="range"] {
   -webkit-appearance: none;
-  height: 8px;
-  border-radius: 4px;
-  background: #e5e7eb;
+  appearance: none;
+  height: 4px;
+  border-radius: 0;
+  background: var(--charcoal);
+  cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  border-radius: 50%;
-  background: #0ea5e9;
+  border-radius: 0;
+  background: var(--coral);
+  border: 2px solid var(--charcoal);
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 0px 0px var(--charcoal);
+  transition: all 0.2s ease;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  background: #0284c7;
+  background: var(--mint);
+  transform: scale(1.1);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  background: var(--coral);
+  border: 2px solid var(--charcoal);
+  cursor: pointer;
+}
+
+/* Retro Checkbox */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--charcoal);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--coral);
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23333333' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+/* Retro Button Base */
+.btn-retro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--charcoal);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 4px 4px 0px 0px var(--charcoal);
+}
+
+.btn-retro:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px var(--charcoal);
+}
+
+.btn-retro:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px var(--charcoal);
+}
+
+/* Retro Card */
+.card-retro {
+  background: white;
+  border: 2px solid var(--charcoal);
+  box-shadow: 6px 6px 0px 0px var(--charcoal);
+  padding: 24px;
+}
+
+/* Atomic Star Decoration */
+.atomic-star {
+  position: relative;
+}
+
+.atomic-star::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--coral);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* Boomerang Decorative Element */
+.boomerang {
+  width: 60px;
+  height: 30px;
+  border: 3px solid var(--turquoise);
+  border-radius: 50% 50% 0 0;
+  border-bottom: none;
+  transform: rotate(-30deg);
+}
+
+/* Mid-Century Divider */
+.divider-retro {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.divider-retro::before,
+.divider-retro::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--charcoal);
+}
+
+/* Utility Classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
 }
