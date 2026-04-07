@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Meetup Card Generator">
+  <rect width="256" height="256" rx="36" fill="#F5E6C8"/>
+  <rect x="28" y="28" width="80" height="80" fill="#333333"/>
+  <rect x="148" y="28" width="80" height="80" fill="#333333"/>
+  <rect x="28" y="148" width="80" height="80" fill="#333333"/>
+  <rect x="52" y="52" width="32" height="32" fill="#F5E6C8"/>
+  <rect x="172" y="52" width="32" height="32" fill="#F5E6C8"/>
+  <rect x="52" y="172" width="32" height="32" fill="#F5E6C8"/>
+  <rect x="148" y="148" width="28" height="28" fill="#333333"/>
+  <rect x="180" y="148" width="48" height="20" fill="#7DD2B7"/>
+  <rect x="180" y="176" width="20" height="20" fill="#E8765C"/>
+  <rect x="208" y="176" width="20" height="20" fill="#52C3D3"/>
+  <rect x="180" y="204" width="48" height="20" fill="#333333"/>
+</svg>

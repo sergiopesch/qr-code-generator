@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toPng } from 'html-to-image';
+import Image from 'next/image';
 import QRCodeStyling, {
   DotType,
   CornerSquareType,
@@ -22,34 +24,50 @@ import {
   Calendar,
   ChevronDown,
   Sparkles,
+  User,
 } from 'lucide-react';
+import { eventConfig } from '@/config/event';
+import {
+  buildQRData,
+  DEFAULT_EMAIL_DATA,
+  DEFAULT_EVENT_DATA,
+  DEFAULT_LOCATION_DATA,
+  DEFAULT_PHONE,
+  DEFAULT_TEXT,
+  DEFAULT_URL,
+  DEFAULT_WIFI_DATA,
+  EmailData,
+  EventData,
+  formatEventDateRange,
+  getQRPreviewText,
+  LocationData,
+  QRContentState,
+  QRType,
+  WifiData,
+} from '@/lib/qr';
 
-type QRType = 'url' | 'text' | 'wifi' | 'email' | 'phone' | 'location' | 'event';
-
-interface WifiData {
-  ssid: string;
-  password: string;
-  encryption: 'WPA' | 'WEP' | 'nopass';
-  hidden: boolean;
+interface QRVisualOptions {
+  size: number;
+  margin: number;
+  dotColor: string;
+  backgroundColor: string;
+  dotType: DotType;
+  cornerSquareType: CornerSquareType;
+  cornerDotType: CornerDotType;
+  cornerSquareColor: string;
+  cornerDotColor: string;
+  errorCorrectionLevel: ErrorCorrectionLevel;
+  logo: string | null;
+  logoSize: number;
+  logoMargin: number;
 }
 
-interface EmailData {
-  address: string;
-  subject: string;
-  body: string;
-}
-
-interface LocationData {
-  latitude: string;
-  longitude: string;
-}
-
-interface EventData {
+interface SectionHeaderProps {
   title: string;
-  startDate: string;
-  endDate: string;
-  location: string;
-  description: string;
+  section: string;
+  icon: React.ReactNode;
+  isOpen: boolean;
+  onToggle: (section: string) => void;
 }
 
 const QR_TYPES: { value: QRType; label: string; icon: React.ReactNode }[] = [
@@ -89,140 +107,158 @@ const ERROR_CORRECTION_LEVELS: { value: ErrorCorrectionLevel; label: string }[] 
   { value: 'H', label: 'High' },
 ];
 
-// 50's inspired color presets
+// Event-adjacent presets that keep the QR highly scannable.
 const COLOR_PRESETS = [
-  { name: 'Classic', dot: '#333333', bg: '#FFFFFF', corner: '#333333' },
-  { name: 'Mint', dot: '#338570', bg: '#F0FAF7', corner: '#338570' },
-  { name: 'Coral', dot: '#D45A40', bg: '#FFF5F3', corner: '#D45A40' },
-  { name: 'Turquoise', dot: '#2F8795', bg: '#F0FAFB', corner: '#2F8795' },
-  { name: 'Mustard', dot: '#B8860B', bg: '#FFFBEB', corner: '#B8860B' },
-  { name: 'Charcoal', dot: '#1A1A1A', bg: '#F5E6C8', corner: '#1A1A1A' },
+  { name: 'Ink', dot: '#111111', bg: '#FFFFFF', corner: '#111111' },
+  { name: 'Paper', dot: '#111111', bg: '#F7F3EA', corner: '#B08A3C' },
+  { name: 'Fog', dot: '#111111', bg: '#EEF2F1', corner: '#7F8A85' },
+  { name: 'Brass', dot: '#111111', bg: '#FCF8EE', corner: '#8E6B27' },
+  { name: 'Blueprint', dot: '#13212B', bg: '#F4F7FA', corner: '#4D6476' },
+  { name: 'Night', dot: '#FFFFFF', bg: '#111111', corner: '#B08A3C' },
 ];
+
+const DEFAULT_VISUAL_OPTIONS: QRVisualOptions = {
+  size: 280,
+  margin: 10,
+  dotColor: '#111111',
+  backgroundColor: '#f7f3ea',
+  dotType: 'square',
+  cornerSquareType: 'extra-rounded',
+  cornerDotType: 'dot',
+  cornerSquareColor: '#b08a3c',
+  cornerDotColor: '#b08a3c',
+  errorCorrectionLevel: 'M',
+  logo: null,
+  logoSize: 0.35,
+  logoMargin: 5,
+};
+
+function buildQRCodeOptions(options: QRVisualOptions, data: string): Options {
+  const qrOptions: Options = {
+    width: options.size,
+    height: options.size,
+    margin: options.margin,
+    data,
+    dotsOptions: {
+      color: options.dotColor,
+      type: options.dotType,
+    },
+    backgroundOptions: {
+      color: options.backgroundColor,
+    },
+    cornersSquareOptions: {
+      color: options.cornerSquareColor,
+      type: options.cornerSquareType,
+    },
+    cornersDotOptions: {
+      color: options.cornerDotColor,
+      type: options.cornerDotType,
+    },
+    qrOptions: {
+      errorCorrectionLevel: options.errorCorrectionLevel,
+    },
+    imageOptions: {
+      crossOrigin: 'anonymous',
+      margin: options.logoMargin,
+      imageSize: options.logoSize,
+    },
+    image: options.logo ?? undefined,
+  };
+
+  return qrOptions;
+}
+
+function SectionHeader({ title, section, icon, isOpen, onToggle }: SectionHeaderProps) {
+  return (
+    <button
+      onClick={() => onToggle(section)}
+      className="w-full flex items-center justify-between py-3 text-left group"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-coral">{icon}</span>
+        <span className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm">{title}</span>
+      </div>
+      <ChevronDown
+        className={`w-4 h-4 text-charcoal/50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+      />
+    </button>
+  );
+}
 
 export function QRCodeGenerator() {
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCode = useRef<QRCodeStyling | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // QR Type and Data
   const [qrType, setQrType] = useState<QRType>('url');
-  const [urlData, setUrlData] = useState('https://github.com');
+  const [urlData, setUrlData] = useState(DEFAULT_URL);
   const [textData, setTextData] = useState('');
   const [phoneData, setPhoneData] = useState('');
-  const [wifiData, setWifiData] = useState<WifiData>({
-    ssid: '',
-    password: '',
-    encryption: 'WPA',
-    hidden: false,
-  });
-  const [emailData, setEmailData] = useState<EmailData>({
-    address: '',
-    subject: '',
-    body: '',
-  });
-  const [locationData, setLocationData] = useState<LocationData>({
-    latitude: '',
-    longitude: '',
-  });
-  const [eventData, setEventData] = useState<EventData>({
-    title: '',
-    startDate: '',
-    endDate: '',
-    location: '',
-    description: '',
-  });
+  const [wifiData, setWifiData] = useState<WifiData>(DEFAULT_WIFI_DATA);
+  const [emailData, setEmailData] = useState<EmailData>(DEFAULT_EMAIL_DATA);
+  const [locationData, setLocationData] = useState<LocationData>(DEFAULT_LOCATION_DATA);
+  const [eventData, setEventData] = useState<EventData>(DEFAULT_EVENT_DATA);
 
   // Styling Options
-  const [size, setSize] = useState(280);
-  const [margin, setMargin] = useState(10);
-  const [dotColor, setDotColor] = useState('#333333');
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-  const [dotType, setDotType] = useState<DotType>('square');
-  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('square');
-  const [cornerDotType, setCornerDotType] = useState<CornerDotType>('square');
-  const [cornerSquareColor, setCornerSquareColor] = useState('#333333');
-  const [cornerDotColor, setCornerDotColor] = useState('#333333');
-  const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<ErrorCorrectionLevel>('M');
+  const [size, setSize] = useState(DEFAULT_VISUAL_OPTIONS.size);
+  const [margin, setMargin] = useState(DEFAULT_VISUAL_OPTIONS.margin);
+  const [dotColor, setDotColor] = useState(DEFAULT_VISUAL_OPTIONS.dotColor);
+  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_VISUAL_OPTIONS.backgroundColor);
+  const [dotType, setDotType] = useState<DotType>(DEFAULT_VISUAL_OPTIONS.dotType);
+  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>(DEFAULT_VISUAL_OPTIONS.cornerSquareType);
+  const [cornerDotType, setCornerDotType] = useState<CornerDotType>(DEFAULT_VISUAL_OPTIONS.cornerDotType);
+  const [cornerSquareColor, setCornerSquareColor] = useState(DEFAULT_VISUAL_OPTIONS.cornerSquareColor);
+  const [cornerDotColor, setCornerDotColor] = useState(DEFAULT_VISUAL_OPTIONS.cornerDotColor);
+  const [errorCorrectionLevel, setErrorCorrectionLevel] = useState<ErrorCorrectionLevel>(DEFAULT_VISUAL_OPTIONS.errorCorrectionLevel);
 
   // Logo
-  const [logo, setLogo] = useState<string | null>(null);
-  const [logoSize, setLogoSize] = useState(0.35);
-  const [logoMargin, setLogoMargin] = useState(5);
+  const [logo, setLogo] = useState<string | null>(DEFAULT_VISUAL_OPTIONS.logo);
+  const [logoSize, setLogoSize] = useState(DEFAULT_VISUAL_OPTIONS.logoSize);
+  const [logoMargin, setLogoMargin] = useState(DEFAULT_VISUAL_OPTIONS.logoMargin);
 
   // UI State
   const [activeSection, setActiveSection] = useState<string | null>('type');
   const [isFloating, setIsFloating] = useState(true);
+  const [cardName, setCardName] = useState('');
+  const [cardHeadline, setCardHeadline] = useState('Builder, collaborator, and scan-first networker');
+  const [cardQrImageUrl, setCardQrImageUrl] = useState<string | null>(null);
+  const [isDownloadingCard, setIsDownloadingCard] = useState(false);
+  const [cardDownloadError, setCardDownloadError] = useState<string | null>(null);
+
+  const qrState: QRContentState = {
+    qrType,
+    urlData,
+    textData,
+    phoneData,
+    wifiData,
+    emailData,
+    locationData,
+    eventData,
+  };
 
   // Generate QR data based on type
-  const generateQRData = useCallback((): string => {
-    switch (qrType) {
-      case 'url':
-        return urlData || 'https://github.com';
-      case 'text':
-        return textData || 'Hello World';
-      case 'phone':
-        return phoneData ? `tel:${phoneData}` : 'tel:+1234567890';
-      case 'wifi':
-        return `WIFI:T:${wifiData.encryption};S:${wifiData.ssid};P:${wifiData.password};H:${wifiData.hidden ? 'true' : 'false'};;`;
-      case 'email':
-        const emailParams = new URLSearchParams();
-        if (emailData.subject) emailParams.set('subject', emailData.subject);
-        if (emailData.body) emailParams.set('body', emailData.body);
-        const paramStr = emailParams.toString();
-        return `mailto:${emailData.address}${paramStr ? '?' + paramStr : ''}`;
-      case 'location':
-        return `geo:${locationData.latitude || '0'},${locationData.longitude || '0'}`;
-      case 'event':
-        const formatDate = (date: string) => date.replace(/[-:]/g, '').replace('T', 'T') + '00';
-        return `BEGIN:VEVENT
-SUMMARY:${eventData.title}
-DTSTART:${formatDate(eventData.startDate)}
-DTEND:${formatDate(eventData.endDate)}
-LOCATION:${eventData.location}
-DESCRIPTION:${eventData.description}
-END:VEVENT`;
-      default:
-        return 'https://github.com';
-    }
-  }, [qrType, urlData, textData, phoneData, wifiData, emailData, locationData, eventData]);
+  const generateQRData = useCallback(
+    (): string =>
+      buildQRData({
+        qrType,
+        urlData,
+        textData,
+        phoneData,
+        wifiData,
+        emailData,
+        locationData,
+        eventData,
+      }),
+    [qrType, urlData, textData, phoneData, wifiData, emailData, locationData, eventData]
+  );
 
   // Initialize QR Code
   useEffect(() => {
-    const options: Options = {
-      width: size,
-      height: size,
-      margin: margin,
-      data: generateQRData(),
-      dotsOptions: {
-        color: dotColor,
-        type: dotType,
-      },
-      backgroundOptions: {
-        color: backgroundColor,
-      },
-      cornersSquareOptions: {
-        color: cornerSquareColor,
-        type: cornerSquareType,
-      },
-      cornersDotOptions: {
-        color: cornerDotColor,
-        type: cornerDotType,
-      },
-      qrOptions: {
-        errorCorrectionLevel: errorCorrectionLevel,
-      },
-      imageOptions: {
-        crossOrigin: 'anonymous',
-        margin: logoMargin,
-        imageSize: logoSize,
-      },
-    };
-
-    if (logo) {
-      options.image = logo;
-    }
-
-    qrCode.current = new QRCodeStyling(options);
+    qrCode.current = new QRCodeStyling(
+      buildQRCodeOptions(DEFAULT_VISUAL_OPTIONS, DEFAULT_URL)
+    );
 
     if (qrRef.current) {
       qrRef.current.innerHTML = '';
@@ -233,44 +269,73 @@ END:VEVENT`;
   // Update QR Code when options change
   useEffect(() => {
     if (qrCode.current) {
-      const options: Partial<Options> = {
-        width: size,
-        height: size,
-        margin: margin,
-        data: generateQRData(),
-        dotsOptions: {
-          color: dotColor,
-          type: dotType,
-        },
-        backgroundOptions: {
-          color: backgroundColor,
-        },
-        cornersSquareOptions: {
-          color: cornerSquareColor,
-          type: cornerSquareType,
-        },
-        cornersDotOptions: {
-          color: cornerDotColor,
-          type: cornerDotType,
-        },
-        qrOptions: {
-          errorCorrectionLevel: errorCorrectionLevel,
-        },
-        imageOptions: {
-          crossOrigin: 'anonymous',
-          margin: logoMargin,
-          imageSize: logoSize,
-        },
-      };
+      qrCode.current.update(buildQRCodeOptions({
+        size,
+        margin,
+        dotColor,
+        backgroundColor,
+        dotType,
+        cornerSquareType,
+        cornerDotType,
+        cornerSquareColor,
+        cornerDotColor,
+        errorCorrectionLevel,
+        logo,
+        logoSize,
+        logoMargin,
+      }, generateQRData()));
+    }
+  }, [
+    size,
+    margin,
+    dotColor,
+    backgroundColor,
+    dotType,
+    cornerSquareType,
+    cornerDotType,
+    cornerSquareColor,
+    cornerDotColor,
+    errorCorrectionLevel,
+    logo,
+    logoSize,
+    logoMargin,
+    generateQRData,
+  ]);
 
-      if (logo) {
-        options.image = logo;
-      } else {
-        options.image = undefined;
+  useEffect(() => {
+    let isMounted = true;
+    let nextUrl: string | null = null;
+
+    async function syncCardQrImage() {
+      if (!qrCode.current) {
+        return;
       }
 
-      qrCode.current.update(options);
+      const rawData = await qrCode.current.getRawData('png');
+      if (!rawData || !isMounted) {
+        return;
+      }
+
+      const blob =
+        rawData instanceof Blob
+          ? rawData
+          : new Blob([new Uint8Array(rawData)], { type: 'image/png' });
+      nextUrl = URL.createObjectURL(blob);
+      setCardQrImageUrl(nextUrl);
     }
+
+    syncCardQrImage().catch(() => {
+      if (isMounted) {
+        setCardQrImageUrl(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (nextUrl) {
+        URL.revokeObjectURL(nextUrl);
+      }
+    };
   }, [
     size,
     margin,
@@ -317,20 +382,63 @@ END:VEVENT`;
     }
   };
 
+  const downloadConferenceCard = async () => {
+    if (!cardRef.current) {
+      return;
+    }
+
+    setCardDownloadError(null);
+    setIsDownloadingCard(true);
+
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2.5,
+        backgroundColor: '#f7f3ea',
+      });
+
+      const anchor = document.createElement('a');
+      anchor.href = dataUrl;
+      anchor.download = `meetup-card-${Date.now()}.png`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    } catch (error) {
+      setCardDownloadError(
+        error instanceof Error ? error.message : 'Unable to export the meetup card.'
+      );
+    } finally {
+      setIsDownloadingCard(false);
+    }
+  };
+
   const resetToDefaults = () => {
-    setSize(280);
-    setMargin(10);
-    setDotColor('#333333');
-    setBackgroundColor('#ffffff');
-    setDotType('square');
-    setCornerSquareType('square');
-    setCornerDotType('square');
-    setCornerSquareColor('#333333');
-    setCornerDotColor('#333333');
-    setErrorCorrectionLevel('M');
-    setLogo(null);
-    setLogoSize(0.35);
-    setLogoMargin(5);
+    setQrType('url');
+    setUrlData(DEFAULT_URL);
+    setTextData('');
+    setPhoneData('');
+    setWifiData(DEFAULT_WIFI_DATA);
+    setEmailData(DEFAULT_EMAIL_DATA);
+    setLocationData(DEFAULT_LOCATION_DATA);
+    setEventData(DEFAULT_EVENT_DATA);
+    setSize(DEFAULT_VISUAL_OPTIONS.size);
+    setMargin(DEFAULT_VISUAL_OPTIONS.margin);
+    setDotColor(DEFAULT_VISUAL_OPTIONS.dotColor);
+    setBackgroundColor(DEFAULT_VISUAL_OPTIONS.backgroundColor);
+    setDotType(DEFAULT_VISUAL_OPTIONS.dotType);
+    setCornerSquareType(DEFAULT_VISUAL_OPTIONS.cornerSquareType);
+    setCornerDotType(DEFAULT_VISUAL_OPTIONS.cornerDotType);
+    setCornerSquareColor(DEFAULT_VISUAL_OPTIONS.cornerSquareColor);
+    setCornerDotColor(DEFAULT_VISUAL_OPTIONS.cornerDotColor);
+    setErrorCorrectionLevel(DEFAULT_VISUAL_OPTIONS.errorCorrectionLevel);
+    setLogo(DEFAULT_VISUAL_OPTIONS.logo);
+    setLogoSize(DEFAULT_VISUAL_OPTIONS.logoSize);
+    setLogoMargin(DEFAULT_VISUAL_OPTIONS.logoMargin);
+    setCardName('');
+    setCardHeadline('Builder, collaborator, and scan-first networker');
+    setCardDownloadError(null);
+    setActiveSection('type');
+    setIsFloating(true);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -347,8 +455,18 @@ END:VEVENT`;
     setActiveSection(activeSection === section ? null : section);
   };
 
+  const qrPreviewText = getQRPreviewText(qrState);
+  const cardPrimaryLabel = cardName || 'Your Name';
+  const cardSecondaryLabel =
+    cardHeadline || 'What you build, hire for, or want to talk about';
+  const cardDateLabel = formatEventDateRange(
+    eventData.startDate || eventConfig.startsAt,
+    eventData.endDate || eventConfig.endsAt
+  );
+  const cardVenueLabel = eventData.location || eventConfig.venueName || eventConfig.venueAddress;
+
   const renderDataInput = () => {
-    const inputClass = "w-full bg-white text-charcoal placeholder-charcoal/40";
+    const inputClass = "w-full bg-white text-charcoal placeholder-charcoal/35";
 
     switch (qrType) {
       case 'url':
@@ -495,27 +613,19 @@ END:VEVENT`;
               placeholder="Location"
               className={inputClass}
             />
+            <textarea
+              value={eventData.description}
+              onChange={(e) => setEventData({ ...eventData, description: e.target.value })}
+              placeholder="Description"
+              rows={2}
+              className={`${inputClass} resize-none`}
+            />
           </div>
         );
       default:
         return null;
     }
   };
-
-  const SectionHeader = ({ title, section, icon }: { title: string; section: string; icon: React.ReactNode }) => (
-    <button
-      onClick={() => toggleSection(section)}
-      className="w-full flex items-center justify-between py-3 text-left group"
-    >
-      <div className="flex items-center gap-3">
-        <span className="text-coral">{icon}</span>
-        <span className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm">{title}</span>
-      </div>
-      <ChevronDown
-        className={`w-4 h-4 text-charcoal/50 transition-transform ${activeSection === section ? 'rotate-180' : ''}`}
-      />
-    </button>
-  );
 
   return (
     <div className="grid lg:grid-cols-5 gap-8">
@@ -524,7 +634,13 @@ END:VEVENT`;
         <div className="card-retro divide-y-2 divide-charcoal">
           {/* Type Selection */}
           <div className="pb-4">
-            <SectionHeader title="Type" section="type" icon={<Link className="w-4 h-4" />} />
+            <SectionHeader
+              title="Type"
+              section="type"
+              icon={<Link className="w-4 h-4" />}
+              isOpen={activeSection === 'type'}
+              onToggle={toggleSection}
+            />
             {activeSection === 'type' && (
               <div className="pt-2">
                 <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
@@ -550,9 +666,57 @@ END:VEVENT`;
             )}
           </div>
 
+          {/* Card Details */}
+          <div className="py-4">
+            <SectionHeader
+              title="Card"
+              section="card"
+              icon={<User className="w-4 h-4" />}
+              isOpen={activeSection === 'card'}
+              onToggle={toggleSection}
+            />
+            {activeSection === 'card' && (
+              <div className="pt-2 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="Your name or handle"
+                    className="w-full bg-white text-charcoal"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal/60 uppercase tracking-wider mb-2">
+                    Headline
+                  </label>
+                  <textarea
+                    value={cardHeadline}
+                    onChange={(e) => setCardHeadline(e.target.value)}
+                    placeholder="What you build, hire for, or want to talk about"
+                    rows={2}
+                    className="w-full bg-white text-charcoal resize-none"
+                  />
+                </div>
+                <p className="text-xs text-charcoal/50">
+                  These fields personalize the meetup card without changing the QR payload itself.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Colors */}
           <div className="py-4">
-            <SectionHeader title="Colors" section="colors" icon={<Sparkles className="w-4 h-4" />} />
+            <SectionHeader
+              title="Colors"
+              section="colors"
+              icon={<Sparkles className="w-4 h-4" />}
+              isOpen={activeSection === 'colors'}
+              onToggle={toggleSection}
+            />
             {activeSection === 'colors' && (
               <div className="pt-2 space-y-4">
                 {/* Color Presets */}
@@ -608,7 +772,13 @@ END:VEVENT`;
 
           {/* Style */}
           <div className="py-4">
-            <SectionHeader title="Style" section="style" icon={<Type className="w-4 h-4" />} />
+            <SectionHeader
+              title="Style"
+              section="style"
+              icon={<Type className="w-4 h-4" />}
+              isOpen={activeSection === 'style'}
+              onToggle={toggleSection}
+            />
             {activeSection === 'style' && (
               <div className="pt-2 space-y-4">
                 <div>
@@ -703,7 +873,13 @@ END:VEVENT`;
 
           {/* Logo Fusion */}
           <div className="py-4">
-            <SectionHeader title="Logo Fusion" section="logo" icon={<ImageIcon className="w-4 h-4" />} />
+            <SectionHeader
+              title="Logo Fusion"
+              section="logo"
+              icon={<ImageIcon className="w-4 h-4" />}
+              isOpen={activeSection === 'logo'}
+              onToggle={toggleSection}
+            />
             {activeSection === 'logo' && (
               <div className="pt-2 space-y-4">
                 <div className="flex items-center gap-3">
@@ -765,7 +941,7 @@ END:VEVENT`;
                 )}
 
                 <p className="text-xs text-charcoal/50">
-                  {logo ? 'Logo fusion active - your brand emerges from the code' : 'Add your logo to create a unified 3D QR experience'}
+                  {logo ? 'Logo fusion active. Keep the mark simple for best scanning.' : 'Add a personal mark if you want, but keep the center clean enough to scan quickly.'}
                 </p>
               </div>
             )}
@@ -789,7 +965,7 @@ END:VEVENT`;
         {/* 3D QR Preview */}
         <div className="card-retro">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm">Preview</h3>
+            <h3 className="font-body font-semibold text-charcoal uppercase tracking-[0.22em] text-sm">QR Preview</h3>
             <button
               onClick={() => setIsFloating(!isFloating)}
               className={`text-xs font-semibold uppercase tracking-wider px-3 py-1 border-2 transition-all ${
@@ -818,14 +994,137 @@ END:VEVENT`;
           </div>
 
           {/* Download hint */}
-          <p className="text-center text-xs text-charcoal/40 uppercase tracking-widest">
-            Hover to interact
+          <p className="text-center text-xs text-charcoal/40 uppercase tracking-[0.24em]">
+            Editorial framing, conservative modules
           </p>
         </div>
 
-        {/* Download Options */}
+        {/* Phone Card */}
         <div className="card-retro">
-          <h3 className="font-display font-semibold text-charcoal uppercase tracking-wide text-sm mb-4">Export</h3>
+          <div className="flex items-center justify-between mb-4 gap-4">
+            <div>
+              <h3 className="font-body font-semibold text-charcoal uppercase tracking-[0.22em] text-sm">
+                Meetup Card
+              </h3>
+              <p className="text-xs text-charcoal/50 mt-1">
+                Save this to Photos and pull it up quickly while you are moving between talks.
+              </p>
+            </div>
+            <button
+              onClick={downloadConferenceCard}
+              disabled={isDownloadingCard}
+              className="btn-retro bg-charcoal text-cream text-sm px-4 py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Download className="w-4 h-4" />
+              {isDownloadingCard ? 'Saving...' : 'Save Card'}
+            </button>
+          </div>
+
+          <div
+            ref={cardRef}
+            className="relative overflow-hidden border-2 border-charcoal bg-cream p-5 sm:p-6"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(247,243,234,0.96)), #f7f3ea',
+            }}
+          >
+            <div className="absolute inset-x-0 top-0 h-2 bg-charcoal" />
+            <div className="absolute inset-x-0 top-2 h-px bg-coral/70" />
+            <div className="absolute right-5 top-6 h-28 w-28 rounded-full border border-coral/15" />
+            <div className="absolute right-10 top-11 h-20 w-20 rounded-full border border-coral/10" />
+            <div className="absolute inset-x-6 bottom-14 h-px bg-charcoal/10" />
+
+            <div className="relative flex items-start justify-between gap-4 border-b-2 border-charcoal pb-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-charcoal/60 font-semibold">
+                  {eventConfig.cardEyebrow}
+                </p>
+                <h3 className="font-display text-[2rem] sm:text-[2.35rem] text-charcoal mt-2 leading-none">
+                  {cardPrimaryLabel}
+                </h3>
+                <p className="text-sm text-charcoal/75 mt-2 max-w-[18rem]">
+                  {cardSecondaryLabel}
+                </p>
+              </div>
+              <div className="border-2 border-charcoal bg-charcoal px-3 py-2 text-cream text-right min-w-[7rem]">
+                <div className="text-[10px] uppercase tracking-[0.25em] text-cream/60">QR PASS</div>
+                <div className="font-body text-sm leading-none mt-2 uppercase tracking-[0.2em]">{qrType}</div>
+              </div>
+            </div>
+
+            <div className="relative mt-5 grid grid-cols-[1fr_auto] gap-4 items-end">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-charcoal/60 font-semibold">
+                    Event
+                  </p>
+                  <p className="text-base text-charcoal font-semibold mt-1">{eventConfig.eventName}</p>
+                </div>
+
+                {cardVenueLabel && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-charcoal/60 font-semibold">
+                      Venue
+                    </p>
+                    <p className="text-sm text-charcoal/80 mt-1">{cardVenueLabel}</p>
+                  </div>
+                )}
+
+                {cardDateLabel && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-charcoal/60 font-semibold">
+                      When
+                    </p>
+                    <p className="text-sm text-charcoal/80 mt-1">{cardDateLabel}</p>
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-charcoal/60 font-semibold">
+                    Link
+                  </p>
+                  <p className="text-sm text-charcoal/80 mt-1 break-all max-w-[18rem]">
+                    {qrPreviewText}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-2 border-charcoal bg-white p-3 shadow-[6px_6px_0_0_#111111]">
+                {cardQrImageUrl ? (
+                  <Image
+                    src={cardQrImageUrl}
+                    alt="Meetup QR card"
+                    width={128}
+                    height={128}
+                    unoptimized
+                    className="block w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                  />
+                ) : (
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 bg-charcoal/5" />
+                )}
+              </div>
+            </div>
+
+            <div className="relative mt-5 flex items-center justify-between gap-4 border-t-2 border-charcoal pt-4">
+              <p className="text-xs uppercase tracking-[0.25em] text-charcoal/70 font-semibold">
+                {eventConfig.cardCallout}
+              </p>
+              <p className="text-xs text-charcoal/55 text-right max-w-[14rem]">
+                Save the image and favorite it in Photos for one-tap access.
+              </p>
+            </div>
+          </div>
+
+          {cardDownloadError && (
+            <p className="text-xs text-coral mt-3 text-center">
+              {cardDownloadError}
+            </p>
+          )}
+        </div>
+
+        {/* Export Options */}
+        <div className="card-retro">
+          <h3 className="font-body font-semibold text-charcoal uppercase tracking-[0.22em] text-sm mb-4">QR Export</h3>
           <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => downloadQRCode('png')}
@@ -850,8 +1149,27 @@ END:VEVENT`;
             </button>
           </div>
           <p className="text-xs text-charcoal/40 mt-4 text-center uppercase tracking-wider">
-            SVG for print &bull; PNG for web
+            Save Card for your phone &bull; PNG for posting &bull; SVG for print
           </p>
+        </div>
+
+        <div className="card-retro">
+          <h3 className="font-body font-semibold text-charcoal uppercase tracking-[0.22em] text-sm mb-3">
+            Quick Access
+          </h3>
+          <p className="text-sm text-charcoal/70">
+            {eventConfig.installPrompt}
+          </p>
+          <div className="mt-4 grid sm:grid-cols-3 gap-3 text-xs uppercase tracking-wider text-charcoal/60">
+            <div className="border-2 border-charcoal/20 p-3 bg-white/70">1. Save Card</div>
+            <div className="border-2 border-charcoal/20 p-3 bg-white/70">2. Favorite In Photos</div>
+            <div className="border-2 border-charcoal/20 p-3 bg-white/70">3. Pin Before Day One</div>
+          </div>
+          {eventConfig.disclaimer && (
+            <p className="mt-4 text-xs text-charcoal/55">
+              {eventConfig.disclaimer}
+            </p>
+          )}
         </div>
       </div>
     </div>
