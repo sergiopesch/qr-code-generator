@@ -1,29 +1,42 @@
-import type { Metadata } from 'next';
-import { Space_Grotesk, Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Instrument_Sans, Instrument_Serif } from 'next/font/google';
+import { eventConfig } from '@/config/event';
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({
+const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
-  variable: '--font-space-grotesk',
+  variable: '--font-instrument-sans',
   display: 'swap',
 });
 
-const inter = Inter({
+const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: '400',
+  variable: '--font-instrument-serif',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'QR Studio | Minimalist QR Code Generator',
-  description: 'Ultra-minimalist QR code generator with 1950s-inspired design. Create stunning 3D QR codes with innovative logo fusion technology.',
-  keywords: ['QR code', 'QR generator', 'minimalist', 'retro design', '1950s', '3D QR code', 'logo fusion'],
+  title: `${eventConfig.appName} | ${eventConfig.eventName}`,
+  description: eventConfig.heroDescription,
+  keywords: ['QR code', 'meetup card', 'conference card', 'event QR', 'Next.js'],
   authors: [{ name: 'Sergio Peschiera' }],
+  manifest: '/manifest.webmanifest',
+  applicationName: eventConfig.appName,
+  appleWebApp: {
+    capable: true,
+    title: eventConfig.appName,
+    statusBarStyle: 'default',
+  },
   openGraph: {
-    title: 'QR Studio | Minimalist 3D QR Codes',
-    description: 'Create stunning 3D QR codes with innovative logo fusion - inspired by 1950s design',
+    title: `${eventConfig.appName} | ${eventConfig.eventName}`,
+    description: eventConfig.heroDescription,
     type: 'website',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#f7f3ea',
 };
 
 export default function RootLayout({
@@ -32,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
+    <html lang="en" className={`${instrumentSans.variable} ${instrumentSerif.variable}`}>
       <body className="font-body antialiased">{children}</body>
     </html>
   );

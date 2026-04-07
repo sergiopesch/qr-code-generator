@@ -1,18 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f7f3ea;
+  --color-mint: #d8dfd3;
+  --color-mint-500: #8b9587;
+  --color-coral: #b08a3c;
+  --color-turquoise: #c9d5de;
+  --color-charcoal: #111111;
+  --color-mustard: #b08a3c;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-body: var(--font-instrument-sans), system-ui, sans-serif;
+}
 
 :root {
-  --cream: #F5E6C8;
-  --mint: #7DD2B7;
-  --coral: #E8765C;
-  --turquoise: #52C3D3;
-  --charcoal: #333333;
-  --mustard: #D4A017;
+  --cream: #f7f3ea;
+  --mint: #d8dfd3;
+  --coral: #b08a3c;
+  --turquoise: #c9d5de;
+  --charcoal: #111111;
+  --mustard: #b08a3c;
 }
 
 body {
-  background-color: var(--cream);
+  background:
+    radial-gradient(circle at top left, rgba(176, 138, 60, 0.08), transparent 28%),
+    linear-gradient(180deg, #faf8f2 0%, #f7f3ea 100%);
   color: var(--charcoal);
   min-height: 100vh;
 }
@@ -72,7 +84,7 @@ body {
   left: -11px;
   width: 8px;
   height: 100%;
-  background: linear-gradient(to left, rgba(51,51,51,0.15), rgba(51,51,51,0.05));
+  background: linear-gradient(to left, rgba(17,17,17,0.14), rgba(17,17,17,0.05));
   transform: skewY(-45deg);
   transform-origin: top right;
 }
@@ -84,7 +96,7 @@ body {
   left: 8px;
   width: 100%;
   height: 8px;
-  background: linear-gradient(to bottom, rgba(51,51,51,0.15), rgba(51,51,51,0.05));
+  background: linear-gradient(to bottom, rgba(17,17,17,0.14), rgba(17,17,17,0.05));
   transform: skewX(-45deg);
   transform-origin: top left;
 }
@@ -132,7 +144,7 @@ select {
   padding: 12px 16px;
   font-family: inherit;
   transition: all 0.2s ease;
-  box-shadow: 4px 4px 0px 0px var(--charcoal);
+  box-shadow: 4px 4px 0px 0px rgba(17, 17, 17, 0.9);
 }
 
 input[type="text"]:focus,
@@ -239,12 +251,12 @@ input[type="checkbox"]:checked {
   border-radius: 0;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 4px 4px 0px 0px var(--charcoal);
+  box-shadow: 4px 4px 0px 0px rgba(17, 17, 17, 0.9);
 }
 
 .btn-retro:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px var(--charcoal);
+  box-shadow: 6px 6px 0px 0px rgba(17, 17, 17, 0.9);
 }
 
 .btn-retro:active {
@@ -254,10 +266,22 @@ input[type="checkbox"]:checked {
 
 /* Retro Card */
 .card-retro {
-  background: white;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.65) 100%);
   border: 2px solid var(--charcoal);
-  box-shadow: 6px 6px 0px 0px var(--charcoal);
+  box-shadow: 10px 10px 0px 0px rgba(17, 17, 17, 0.94);
   padding: 24px;
+}
+
+.paper-grid {
+  background-image:
+    linear-gradient(rgba(17, 17, 17, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.editorial-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(17, 17, 17, 0.45), transparent);
 }
 
 /* Atomic Star Decoration */
@@ -299,21 +323,18 @@ input[type="checkbox"]:checked {
   background: var(--charcoal);
 }
 
-/* Utility Classes */
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@utility text-balance {
+  text-wrap: balance;
+}
 
-  .perspective-1000 {
-    perspective: 1000px;
-  }
+@utility perspective-1000 {
+  perspective: 1000px;
+}
 
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
+@utility preserve-3d {
+  transform-style: preserve-3d;
+}
 
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
+@utility backface-hidden {
+  backface-visibility: hidden;
 }

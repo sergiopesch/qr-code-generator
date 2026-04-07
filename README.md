@@ -1,37 +1,40 @@
 # QR Studio
 
-An ultra-minimalist QR code generator featuring innovative 3D logo fusion technology, inspired by 1950s mid-century modern design aesthetics.
+A lightweight event QR generator for quick sharing during events, meetups, and conferences, with reusable event theming and a phone-first meetup card flow.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Next.js](https://img.shields.io/badge/Next.js-15.1-black)
+![Next.js](https://img.shields.io/badge/Next.js-16.2-black)
 ![React](https://img.shields.io/badge/React-19.0-61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6)
 
 ## Design Philosophy
 
-**Less is More.** QR Studio embraces the timeless elegance of 1950s design - clean lines, purposeful simplicity, and a carefully curated color palette that brings warmth and character to every QR code you create.
+**Less is More.** QR Studio uses an editorial event aesthetic: serif headlines, sans UI, black ink on paper, and restrained accent color.
 
-### 1950s Color Palette
+### Editorial Palette
 
 | Color | Hex | Usage |
 |-------|-----|-------|
-| Cream | `#F5E6C8` | Background |
-| Mint | `#7DD2B7` | Accents, buttons |
-| Coral | `#E8765C` | Primary actions |
-| Turquoise | `#52C3D3` | Secondary actions |
-| Charcoal | `#333333` | Text, borders |
-| Mustard | `#D4A017` | Highlights |
+| Cream | `#F7F3EA` | Paper background |
+| Mint | `#D8DFD3` | Soft neutral accents |
+| Coral | `#B08A3C` | Brass highlight |
+| Turquoise | `#C9D5DE` | Cool secondary accents |
+| Charcoal | `#111111` | Ink text, borders |
+| Mustard | `#B08A3C` | Highlight details |
 
-## Key Innovation: 3D Logo Fusion
+## What It Does
 
-QR Studio introduces a revolutionary approach to branded QR codes:
+QR Studio is designed to be easy to share as a public link so anyone can quickly generate a QR code without creating an account or installing anything.
 
-- **3D Perspective View** - QR codes are displayed with depth and dimension
-- **Floating Animation** - Subtle movement brings your codes to life
-- **Logo Integration** - Your brand seamlessly emerges from the code itself
-- **Interactive Preview** - Hover to explore from different angles
+- **Fast public utility** - anyone can generate a QR code from a shared link
+- **Real-time preview** - QR codes update as content changes
+- **Flexible content types** - generate common QR payloads for event use
+- **Custom styling** - colors, shapes, size, corners, and logo support
+- **Reusable event template** - tune copy, branding, venue, and schedule through config
+- **Phone-first card flow** - generate a meetup card people can save to Photos and reopen fast
+- **Fast export** - download the meetup card image or the raw QR as PNG, SVG, or JPEG
 
-The 3D effect creates a visual where the logo and QR code become one unified element, rather than a logo simply placed on top of a flat code.
+The preview includes a stylized 3D presentation effect. Exported files preserve the QR styling and logo, but not the CSS-only perspective animation from the page.
 
 ## Features
 
@@ -42,10 +45,10 @@ The 3D effect creates a visual where the logo and QR code become one unified ele
 - Email with subject and body
 - Phone numbers
 - Geographic locations
-- Calendar events (vCalendar)
+- Calendar events (vCalendar payload)
 
 ### Styling Options
-- 6 retro-inspired color presets
+- 6 reusable color presets
 - Custom color controls for dots, background, and corners
 - 6 dot pattern styles (square, dots, rounded, classy, etc.)
 - Corner square and dot customization
@@ -57,28 +60,30 @@ The 3D effect creates a visual where the logo and QR code become one unified ele
 - Automatic high error correction when logo is added
 - Adjustable logo size (15-50%)
 - Logo margin control
-- 3D emergence effect
+- Enhanced preview treatment on the page
 
 ### Export Options
+- Conference card image (phone-friendly)
 - PNG (web-optimized)
 - SVG (print-quality vectors)
 - JPEG (compressed)
 
 ## Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) with App Router
+- **Framework**: [Next.js 16](https://nextjs.org/) with App Router
 - **UI Library**: [React 19](https://react.dev/)
-- **Language**: [TypeScript 5.7](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS 3.4](https://tailwindcss.com/)
-- **Typography**: Space Grotesk (display) + Inter (body)
+- **Language**: [TypeScript 6](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS 4.2](https://tailwindcss.com/)
+- **Typography**: Instrument Serif (display) + Instrument Sans (body)
 - **QR Engine**: [qr-code-styling](https://www.npmjs.com/package/qr-code-styling)
+- **Card Export**: [html-to-image](https://www.npmjs.com/package/html-to-image)
 - **Icons**: [Lucide React](https://lucide.dev/)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.0 or higher
+- Node.js 20.9 or higher
 - npm, yarn, or pnpm
 
 ### Installation
@@ -97,6 +102,25 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Event Template Configuration
+
+The app now has a reusable event config layer in [src/config/event.ts](src/config/event.ts). For a new event, the intended flow is:
+
+1. Copy [.env.example](.env.example) to `.env.local`
+2. Set the `NEXT_PUBLIC_EVENT_*` values for the event name, copy, venue, dates, and card labels
+3. Reuse the same app with a different `.env.local` for each event
+
+This keeps the generator reusable while letting you theme each event without rewriting the app shell.
+
+### Phone-First Flow
+
+The app is optimized around a no-Apple, no-account event flow:
+
+1. Create the QR payload
+2. Personalize the card with a display name and headline
+3. Save the meetup card image to Photos
+4. Favorite it or add the app to the home screen for fast access during the event
+
 ### Production Build
 
 ```bash
@@ -110,18 +134,18 @@ npm start
 
 1. Select the QR code type from the collapsible Type section
 2. Enter your content (URL, text, WiFi details, etc.)
-3. Watch your QR code update in real-time in the 3D preview
+3. Watch your QR code update in real-time in the preview
 
-### Applying Retro Styles
+### Applying Event Styles
 
 1. Open the Colors section
 2. Choose from 6 pre-designed color presets:
-   - Classic (black on white)
-   - Mint (fresh and modern)
-   - Coral (warm and inviting)
-   - Turquoise (cool and calm)
-   - Mustard (bold and vintage)
-   - Charcoal (sophisticated on cream)
+   - Ink
+   - Paper
+   - Fog
+   - Brass
+   - Blueprint
+   - Night
 3. Fine-tune with custom color pickers
 
 ### Logo Fusion
@@ -130,13 +154,21 @@ npm start
 2. Upload your logo image
 3. Adjust size (35% default, 15-50% range)
 4. Set margin for padding around logo
-5. Toggle 3D Float to see your logo emerge from the code
+5. Toggle 3D Float if you want the on-page preview animation
 
-### Interacting with 3D Preview
+### Building A Meetup Card
 
-- **Hover** over the QR code to flatten and enlarge
-- **Toggle 3D Float** button to enable/disable floating animation
-- The preview shows exactly how your QR code will look when exported
+1. Open the Card section
+2. Add your display name, handle, or team
+3. Add a short line about what you build or want to talk about
+4. Use **Save Card** to export a phone-ready meetup card image
+
+### Notes on Preview vs Export
+
+- **Hover** over the QR code to flatten and enlarge the preview
+- **Toggle 3D Float** to enable or disable the floating page effect
+- Exported files include the QR design and embedded logo, but not the CSS perspective or hover animation
+- The meetup card export uses the active event config plus the card details you enter in the UI
 
 ## Project Structure
 
@@ -144,13 +176,18 @@ npm start
 qr-studio/
 ├── src/
 │   ├── app/
-│   │   ├── globals.css      # Retro styling, 3D effects
+│   │   ├── globals.css      # Editorial styling, 3D effects
 │   │   ├── layout.tsx       # Fonts, metadata
-│   │   └── page.tsx         # Minimal landing page
+│   │   ├── page.tsx         # Event landing page
+│   │   ├── manifest.ts      # PWA metadata for home-screen install
+│   │   └── icon.svg         # App icon
 │   └── components/
 │       └── QRCodeGenerator.tsx  # Main generator component
-├── public/
-├── tailwind.config.ts       # 50's color palette
+│   ├── config/
+│   │   └── event.ts         # Event-level branding and card settings
+│   └── lib/
+│       └── qr.ts            # Shared QR payload helpers
+├── .env.example
 ├── package.json
 └── README.md
 ```
@@ -188,23 +225,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Design inspiration from 1950s mid-century modern aesthetics
+- Design inspiration from editorial print systems and portable event card layouts
 - [qr-code-styling](https://github.com/nicklasoverby/qr-code-styling) for QR generation
 - [Lucide](https://lucide.dev/) for beautiful icons
 - [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
 
 ## Changelog
 
-### v3.0.0 (January 23, 2026)
-- Complete minimalist redesign with 1950s aesthetic
-- Introduced 3D Logo Fusion technology
-- New floating QR code preview with perspective effects
-- Added 6 retro color presets (Mint, Coral, Turquoise, Mustard, Charcoal, Classic)
-- Collapsible accordion-style control panels
-- New typography with Space Grotesk display font
-- Retro form styling with offset shadows
-- Interactive 3D hover effects
-- Streamlined UI with ultra-minimal approach
+### v3.0.0 (April 7, 2026)
+- Repositioned the app as a lightweight public QR utility for events
+- Cleaned up QR payload generation and reset behavior
+- Improved calendar event payload handling
+- Added event description input
+- Clarified the difference between on-page preview effects and exported files
+- Synced metadata and package version with the current app
+- Upgraded the stack to Next.js 16, Tailwind CSS 4, and the latest compatible tooling
+- Added reusable event config for template-based theming
+- Added a phone-first meetup card flow with card preview and image export
+- Added installable web app metadata for faster mobile access
 
 ### v2.0.0 (January 22, 2026)
 - Complete rewrite with Next.js 15 and React 19
