@@ -139,10 +139,12 @@ input[type="checkbox"]:checked::after {
 .card-shell {
   border: 1px solid rgba(17, 17, 17, 0.12);
   border-radius: 2rem;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(10px);
   padding: 1.25rem;
-  box-shadow: 0 18px 40px rgba(17, 17, 17, 0.06);
+  box-shadow:
+    0 18px 40px rgba(17, 17, 17, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .section-kicker {
@@ -166,6 +168,79 @@ input[type="checkbox"]:checked::after {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(17, 17, 17, 0.55);
+}
+
+.panel-shell {
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 1rem;
+}
+
+.soft-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+  color: var(--charcoal);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.soft-input::placeholder {
+  color: rgba(17, 17, 17, 0.35);
+}
+
+.soft-input:focus {
+  border-color: rgba(176, 138, 60, 0.7);
+  box-shadow: 0 0 0 4px rgba(176, 138, 60, 0.08);
+}
+
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.8rem 0.95rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(17, 17, 17, 0.72);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.chip-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(17, 17, 17, 0.24);
+}
+
+.chip-button-active {
+  border-color: var(--charcoal);
+  background: var(--charcoal);
+  color: var(--cream);
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.8rem;
+  color: rgba(17, 17, 17, 0.62);
 }
 
 .button-primary,

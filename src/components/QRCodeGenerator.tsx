@@ -482,7 +482,7 @@ export function QRCodeGenerator() {
   }
 
   function renderDataInput() {
-    const inputClass = 'w-full rounded-2xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal shadow-none outline-none transition focus:border-coral';
+    const inputClass = 'soft-input';
 
     switch (qrType) {
       case 'url':
@@ -647,12 +647,15 @@ export function QRCodeGenerator() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] xl:items-start">
-      <section className="card-shell order-2 xl:order-1">
+    <div className="grid gap-6">
+      <section className="card-shell">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="section-kicker">Content</p>
             <h2 className="section-title">Build the QR</h2>
+            <p className="mt-2 text-sm text-charcoal/58">
+              Keep the payload short, make the contrast strong, then export.
+            </p>
           </div>
           <button
             onClick={resetToDefaults}
@@ -663,18 +666,18 @@ export function QRCodeGenerator() {
           </button>
         </div>
 
-        <div className="mt-6 grid gap-6">
-          <div>
+        <div className="mt-6 grid gap-4">
+          <div className="panel-shell">
             <label className="field-label">Type</label>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
               {QR_TYPES.map((type) => (
                 <button
                   key={type.value}
                   onClick={() => setQrType(type.value)}
-                  className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition ${
+                  className={`chip-button ${
                     qrType === type.value
-                      ? 'border-charcoal bg-charcoal text-cream'
-                      : 'border-charcoal/15 bg-white text-charcoal/75 hover:border-charcoal/35'
+                      ? 'chip-button-active'
+                      : ''
                   }`}
                 >
                   {type.icon}
@@ -684,12 +687,12 @@ export function QRCodeGenerator() {
             </div>
           </div>
 
-          <div>
+          <div className="panel-shell">
             <label className="field-label">Data</label>
             <div className="mt-3">{renderDataInput()}</div>
           </div>
 
-          <div className="grid gap-4 rounded-[28px] bg-white/70 p-4 sm:grid-cols-2">
+          <div className="panel-shell grid gap-4 sm:grid-cols-2">
             <div>
               <label className="field-label">Name</label>
               <input
@@ -697,7 +700,7 @@ export function QRCodeGenerator() {
                 value={cardName}
                 onChange={(event) => setCardName(event.target.value)}
                 placeholder="Your name"
-                className="mt-2 w-full rounded-2xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal outline-none transition focus:border-coral"
+                className="soft-input mt-2"
               />
             </div>
             <div>
@@ -707,15 +710,15 @@ export function QRCodeGenerator() {
                 value={cardHeadline}
                 onChange={(event) => setCardHeadline(event.target.value)}
                 placeholder="Short description"
-                className="mt-2 w-full rounded-2xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal outline-none transition focus:border-coral"
+                className="soft-input mt-2"
               />
             </div>
           </div>
 
           <div
-            className={`rounded-[28px] border p-4 ${
+            className={`panel-shell ${
               scanAssessment.isSafe
-                ? 'border-emerald-600/15 bg-emerald-50/80'
+                ? 'border-emerald-600/15 bg-emerald-50/70'
                 : 'border-coral/20 bg-coral/8'
             }`}
           >
@@ -743,125 +746,130 @@ export function QRCodeGenerator() {
             )}
           </div>
 
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <label className="field-label">Colors</label>
-              <div className="flex items-center gap-2 text-xs text-charcoal/55">
-                <span>Correction</span>
-                <button
-                  onClick={() => setErrorCorrectionLevel('M')}
-                  className={`rounded-full px-3 py-1 font-semibold ${
-                    errorCorrectionLevel === 'M' ? 'bg-charcoal text-cream' : 'bg-white text-charcoal/60'
-                  }`}
-                >
-                  M
-                </button>
-                <button
-                  onClick={() => setErrorCorrectionLevel('H')}
-                  className={`rounded-full px-3 py-1 font-semibold ${
-                    errorCorrectionLevel === 'H' ? 'bg-charcoal text-cream' : 'bg-white text-charcoal/60'
-                  }`}
-                >
-                  H
-                </button>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="panel-shell">
+              <div className="flex items-center justify-between gap-3">
+                <label className="field-label">Style</label>
+                <div className="flex items-center gap-2 text-xs text-charcoal/55">
+                  <span>Correction</span>
+                  <button
+                    onClick={() => setErrorCorrectionLevel('M')}
+                    className={`rounded-full px-3 py-1 font-semibold ${
+                      errorCorrectionLevel === 'M' ? 'bg-charcoal text-cream' : 'bg-white text-charcoal/60'
+                    }`}
+                  >
+                    M
+                  </button>
+                  <button
+                    onClick={() => setErrorCorrectionLevel('H')}
+                    className={`rounded-full px-3 py-1 font-semibold ${
+                      errorCorrectionLevel === 'H' ? 'bg-charcoal text-cream' : 'bg-white text-charcoal/60'
+                    }`}
+                  >
+                    H
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {COLOR_PRESETS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    onClick={() => applyColorPreset(preset)}
+                    className="chip-button"
+                    style={{ backgroundColor: preset.bg, color: preset.dot }}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-3 sm:max-w-xs">
+                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                  Dots
+                  <input type="color" value={dotColor} onChange={(event) => setDotColor(event.target.value)} className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1" />
+                </label>
+                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                  Background
+                  <input type="color" value={backgroundColor} onChange={(event) => setBackgroundColor(event.target.value)} className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1" />
+                </label>
+                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                  Corners
+                  <input
+                    type="color"
+                    value={cornerSquareColor}
+                    onChange={(event) => {
+                      setCornerSquareColor(event.target.value);
+                      setCornerDotColor(event.target.value);
+                    }}
+                    className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1"
+                  />
+                </label>
               </div>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {COLOR_PRESETS.map((preset) => (
-                <button
-                  key={preset.name}
-                  onClick={() => applyColorPreset(preset)}
-                  className="rounded-full border border-charcoal/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal transition hover:border-charcoal/35"
-                  style={{ backgroundColor: preset.bg, color: preset.dot }}
-                >
-                  {preset.name}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 gap-3 sm:max-w-xs">
-              <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
-                Dots
-                <input type="color" value={dotColor} onChange={(event) => setDotColor(event.target.value)} className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1" />
-              </label>
-              <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
-                Background
-                <input type="color" value={backgroundColor} onChange={(event) => setBackgroundColor(event.target.value)} className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1" />
-              </label>
-              <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
-                Corners
+            <div className="panel-shell">
+              <label className="field-label">Logo</label>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <input
-                  type="color"
-                  value={cornerSquareColor}
-                  onChange={(event) => {
-                    setCornerSquareColor(event.target.value);
-                    setCornerDotColor(event.target.value);
-                  }}
-                  className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  id="logo-upload"
                 />
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="field-label">Logo</label>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="hidden"
-                id="logo-upload"
-              />
-              <label
-                htmlFor="logo-upload"
-                className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-charcoal/15 bg-white px-4 py-3 text-sm font-medium text-charcoal transition hover:border-charcoal/35"
-              >
-                <ImageIcon className="h-4 w-4" />
-                {logo ? 'Replace logo' : 'Upload logo'}
-              </label>
-              {logo && (
-                <button
-                  onClick={removeLogo}
-                  className="inline-flex items-center gap-2 rounded-full border border-charcoal/15 bg-white px-4 py-3 text-sm font-medium text-charcoal transition hover:border-charcoal/35"
+                <label
+                  htmlFor="logo-upload"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-charcoal/15 bg-white px-4 py-3 text-sm font-medium text-charcoal transition hover:border-charcoal/35"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Remove
-                </button>
+                  <ImageIcon className="h-4 w-4" />
+                  {logo ? 'Replace logo' : 'Upload logo'}
+                </label>
+                {logo && (
+                  <button
+                    onClick={removeLogo}
+                    className="inline-flex items-center gap-2 rounded-full border border-charcoal/15 bg-white px-4 py-3 text-sm font-medium text-charcoal transition hover:border-charcoal/35"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="mt-3 text-sm text-charcoal/58">
+                Optional. Keep the mark small so the code remains easy to scan.
+              </p>
+              {logo && (
+                <div className="mt-4 grid gap-4">
+                  <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                    Logo size
+                    <input
+                      type="range"
+                      min="0.18"
+                      max="0.32"
+                      step="0.01"
+                      value={logoSize}
+                      onChange={(event) => setLogoSize(Number(event.target.value))}
+                    />
+                  </label>
+                  <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                    Logo margin
+                    <input
+                      type="range"
+                      min="0"
+                      max="18"
+                      value={logoMargin}
+                      onChange={(event) => setLogoMargin(Number(event.target.value))}
+                    />
+                  </label>
+                </div>
               )}
             </div>
-            {logo && (
-              <div className="mt-4 grid gap-4 sm:max-w-sm">
-                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
-                  Logo size
-                  <input
-                    type="range"
-                    min="0.18"
-                    max="0.32"
-                    step="0.01"
-                    value={logoSize}
-                    onChange={(event) => setLogoSize(Number(event.target.value))}
-                  />
-                </label>
-                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
-                  Logo margin
-                  <input
-                    type="range"
-                    min="0"
-                    max="18"
-                    value={logoMargin}
-                    onChange={(event) => setLogoMargin(Number(event.target.value))}
-                  />
-                </label>
-              </div>
-            )}
           </div>
         </div>
       </section>
 
-      <section className="order-1 grid gap-6 xl:order-2 xl:sticky xl:top-8">
+      <section className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <div className="card-shell">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -915,6 +923,9 @@ export function QRCodeGenerator() {
             </button>
           </div>
 
+          <p className="mt-4 text-sm text-charcoal/55">
+            Export the QR on its own for print and posting.
+          </p>
           {qrExportFeedback && <p className="mt-3 text-sm text-charcoal/60">{qrExportFeedback}</p>}
         </div>
 
