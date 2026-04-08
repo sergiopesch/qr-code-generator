@@ -23,10 +23,18 @@ export const metadata: Metadata = {
   authors: [{ name: 'Sergio Peschiera' }],
   manifest: '/manifest.webmanifest',
   applicationName: eventConfig.appName,
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
   appleWebApp: {
     capable: true,
     title: eventConfig.appName,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    icon: '/icon.svg',
   },
   openGraph: {
     title: `${eventConfig.appName} | ${eventConfig.eventName}`,
@@ -37,6 +45,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#f7f3ea',
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

@@ -8,8 +8,10 @@ export default function manifest(): MetadataRoute.Manifest {
     description: eventConfig.heroDescription,
     start_url: '/',
     display: 'standalone',
-    background_color: '#f5e6c8',
-    theme_color: '#333333',
+    display_override: ['standalone', 'browser'],
+    background_color: '#fbfaf6',
+    theme_color: '#f7f3ea',
+    orientation: 'portrait',
     icons: [
       {
         src: '/icon.svg',

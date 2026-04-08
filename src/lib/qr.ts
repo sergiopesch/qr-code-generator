@@ -37,6 +37,13 @@ export interface QRContentState {
   eventData: EventData;
 }
 
+export interface QRScanAssessment {
+  isSafe: boolean;
+  level: 'safe' | 'warning';
+  message: string;
+  details: string[];
+}
+
 export const DEFAULT_URL = 'https://example.com';
 export const DEFAULT_TEXT = 'Hello world';
 export const DEFAULT_PHONE = '+1234567890';
@@ -228,4 +235,108 @@ export function formatEventDateRange(startDate: string, endDate: string) {
   }
 
   return formattedStart || formattedEnd;
+}
+
+function normalizeHexColor(color: string) {
+  const value = color.trim().replace('#', '');
+
+  if (value.length === 3) {
+    return value
+      .split('')
+      .map((char) => `${char}${char}`)
+      .join('');
+  }
+
+  return value.slice(0, 6);
+}
+
+function srgbToLinear(value: number) {
+  const normalized = value / 255;
+  return normalized <= 0.04045
+    ? normalized / 12.92
+    : ((normalized + 0.055) / 1.055) ** 2.4;
+}
+
+export function getContrastRatio(firstColor: string, secondColor: string) {
+  const [first, second] = [firstColor, secondColor].map((color) => {
+    const normalized = normalizeHexColor(color);
+    const channels = normalized.match(/.{2}/g) ?? ['00', '00', '00'];
+    const [red, green, blue] = channels.map((channel) => parseInt(channel, 16));
+    const [r, g, b] = [red, green, blue].map(srgbToLinear);
+
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  });
+
+  const lighter = Math.max(first, second);
+  const darker = Math.min(first, second);
+
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+export function assessQRScanSafety(input: {
+  dotColor: string;
+  backgroundColor: string;
+  cornerSquareColor: string;
+  cornerDotColor: string;
+  hasLogo: boolean;
+  logoSize: number;
+  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H';
+}): QRScanAssessment {
+  const contrast = getContrastRatio(input.dotColor, input.backgroundColor);
+  const cornerContrast = Math.min(
+    getContrastRatio(input.cornerSquareColor, input.backgroundColor),
+    getContrastRatio(input.cornerDotColor, input.backgroundColor)
+  );
+  const details: string[] = [];
+
+  if (contrast < 4.5) {
+    return {
+      isSafe: false,
+      level: 'warning',
+      message: 'Increase contrast between the QR modules and the background.',
+      details: ['The current color contrast is too low for reliable scanning.'],
+    };
+  }
+
+  if (cornerContrast < 3) {
+    return {
+      isSafe: false,
+      level: 'warning',
+      message: 'Corner markers need stronger contrast to stay detectable.',
+      details: ['Darken the corner color or lighten the background before exporting.'],
+    };
+  }
+
+  if (input.hasLogo && input.logoSize > 0.32) {
+    return {
+      isSafe: false,
+      level: 'warning',
+      message: 'Reduce the logo size before exporting.',
+      details: ['Large center logos cover too many modules and can break scanning.'],
+    };
+  }
+
+  if (input.hasLogo && input.errorCorrectionLevel !== 'H') {
+    return {
+      isSafe: false,
+      level: 'warning',
+      message: 'Use high error correction when a logo is embedded.',
+      details: ['Logos remove QR modules, so the export is blocked until correction is set to H.'],
+    };
+  }
+
+  if (contrast < 7) {
+    details.push('Contrast is acceptable, but stronger separation will scan faster in low light.');
+  }
+
+  if (input.hasLogo) {
+    details.push('Logo overlay is within the safe range for export.');
+  }
+
+  return {
+    isSafe: true,
+    level: details.length > 0 ? 'warning' : 'safe',
+    message: details.length > 0 ? 'Export is allowed, but there is limited scan margin.' : 'Ready to export.',
+    details,
+  };
 }
