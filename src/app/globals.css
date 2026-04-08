@@ -3,11 +3,9 @@
 @theme {
   --color-cream: #f7f3ea;
   --color-mint: #d8dfd3;
-  --color-mint-500: #8b9587;
   --color-coral: #b08a3c;
   --color-turquoise: #c9d5de;
   --color-charcoal: #111111;
-  --color-mustard: #b08a3c;
   --font-display: var(--font-instrument-serif), Georgia, serif;
   --font-body: var(--font-instrument-sans), system-ui, sans-serif;
 }
@@ -18,27 +16,28 @@
   --coral: #b08a3c;
   --turquoise: #c9d5de;
   --charcoal: #111111;
-  --mustard: #b08a3c;
+}
+
+html {
+  background: #fbfaf6;
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(176, 138, 60, 0.08), transparent 28%),
-    linear-gradient(180deg, #faf8f2 0%, #f7f3ea 100%);
-  color: var(--charcoal);
   min-height: 100vh;
+  color: var(--charcoal);
+  background:
+    radial-gradient(circle at top left, rgba(176, 138, 60, 0.08), transparent 24%),
+    linear-gradient(180deg, #fbfaf6 0%, #f7f3ea 100%);
 }
 
-/* Ultra Minimalist Selection */
 ::selection {
-  background-color: var(--mint);
+  background-color: rgba(216, 223, 211, 0.9);
   color: var(--charcoal);
 }
 
-/* Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -46,295 +45,165 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--charcoal);
-  border-radius: 0;
+  background: rgba(17, 17, 17, 0.35);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--coral);
+  background: rgba(17, 17, 17, 0.55);
 }
 
-/* 3D QR Code Container */
-.qr-3d-container {
-  perspective: 1200px;
-  perspective-origin: 50% 50%;
-}
-
-.qr-3d-wrapper {
-  transform-style: preserve-3d;
-  transform: rotateX(12deg) rotateY(-8deg);
-  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.qr-3d-wrapper:hover {
-  transform: rotateX(0deg) rotateY(0deg) scale(1.05);
-}
-
-/* 3D QR Cube Effect - Creates depth illusion */
-.qr-3d-face {
-  position: relative;
-  background: white;
-  border: 3px solid var(--charcoal);
-}
-
-.qr-3d-face::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: -11px;
-  width: 8px;
-  height: 100%;
-  background: linear-gradient(to left, rgba(17,17,17,0.14), rgba(17,17,17,0.05));
-  transform: skewY(-45deg);
-  transform-origin: top right;
-}
-
-.qr-3d-face::after {
-  content: '';
-  position: absolute;
-  bottom: -11px;
-  left: 8px;
-  width: 100%;
-  height: 8px;
-  background: linear-gradient(to bottom, rgba(17,17,17,0.14), rgba(17,17,17,0.05));
-  transform: skewX(-45deg);
-  transform-origin: top left;
-}
-
-/* Logo Fusion Effect - Makes logo appear embedded in QR */
-.logo-fusion-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) translateZ(20px);
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.qr-3d-wrapper:hover .logo-fusion-container {
-  transform: translate(-50%, -50%) translateZ(40px);
-}
-
-/* Floating Animation for QR */
-@keyframes qr-float {
-  0%, 100% {
-    transform: rotateX(12deg) rotateY(-8deg) translateY(0);
-  }
-  50% {
-    transform: rotateX(12deg) rotateY(-8deg) translateY(-12px);
-  }
-}
-
-.qr-floating {
-  animation: qr-float 6s ease-in-out infinite;
-}
-
-/* Retro Form Inputs */
 input[type="text"],
 input[type="url"],
 input[type="email"],
 input[type="tel"],
 input[type="password"],
 input[type="number"],
+input[type="datetime-local"],
 textarea,
 select {
-  background-color: white;
-  border: 2px solid var(--charcoal);
-  border-radius: 0;
-  padding: 12px 16px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  box-shadow: 4px 4px 0px 0px rgba(17, 17, 17, 0.9);
-}
-
-input[type="text"]:focus,
-input[type="url"]:focus,
-input[type="email"]:focus,
-input[type="tel"]:focus,
-input[type="password"]:focus,
-input[type="number"]:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: var(--coral);
-  box-shadow: 4px 4px 0px 0px var(--coral);
-}
-
-/* Retro Color Picker */
-input[type="color"] {
-  -webkit-appearance: none;
   appearance: none;
-  border: 2px solid var(--charcoal);
-  border-radius: 0;
-  cursor: pointer;
-  box-shadow: 3px 3px 0px 0px var(--charcoal);
-  transition: all 0.2s ease;
 }
 
-input[type="color"]:hover {
-  box-shadow: 4px 4px 0px 0px var(--coral);
+input[type="color"] {
+  appearance: none;
+  cursor: pointer;
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {
-  padding: 2px;
+  padding: 0;
 }
 
 input[type="color"]::-webkit-color-swatch {
-  border: none;
-  border-radius: 0;
+  border: 0;
+  border-radius: 0.75rem;
 }
 
-/* Retro Range Slider */
+input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 0.75rem;
+}
+
 input[type="range"] {
-  -webkit-appearance: none;
   appearance: none;
-  height: 4px;
-  border-radius: 0;
-  background: var(--charcoal);
-  cursor: pointer;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.12);
 }
 
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 0;
-  background: var(--coral);
+  appearance: none;
+  width: 18px;
+  height: 18px;
   border: 2px solid var(--charcoal);
+  border-radius: 999px;
+  background: white;
   cursor: pointer;
-  box-shadow: 2px 2px 0px 0px var(--charcoal);
-  transition: all 0.2s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  background: var(--mint);
-  transform: scale(1.1);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 0;
-  background: var(--coral);
+  width: 18px;
+  height: 18px;
   border: 2px solid var(--charcoal);
+  border-radius: 999px;
+  background: white;
   cursor: pointer;
 }
 
-/* Retro Checkbox */
 input[type="checkbox"] {
-  -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--charcoal);
-  border-radius: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(17, 17, 17, 0.25);
+  border-radius: 0.35rem;
+  background: white;
+  display: inline-grid;
+  place-items: center;
 }
 
-input[type="checkbox"]:checked {
-  background-color: var(--coral);
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23333333' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+input[type="checkbox"]::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 0.15rem;
+  background: var(--charcoal);
+  transform: scale(0);
+  transition: transform 0.12s ease;
 }
 
-/* Retro Button Base */
-.btn-retro {
+input[type="checkbox"]:checked::after {
+  transform: scale(1);
+}
+
+.card-shell {
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  padding: 1.25rem;
+  box-shadow: 0 18px 40px rgba(17, 17, 17, 0.06);
+}
+
+.section-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.5);
+}
+
+.section-title {
+  margin-top: 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  line-height: 0.96;
+}
+
+.field-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.55);
+}
+
+.button-primary,
+.button-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  font-weight: 600;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.85rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border: 2px solid var(--charcoal);
-  border-radius: 0;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 4px 4px 0px 0px rgba(17, 17, 17, 0.9);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.btn-retro:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px rgba(17, 17, 17, 0.9);
-}
-
-.btn-retro:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px var(--charcoal);
-}
-
-/* Retro Card */
-.card-retro {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.65) 100%);
-  border: 2px solid var(--charcoal);
-  box-shadow: 10px 10px 0px 0px rgba(17, 17, 17, 0.94);
-  padding: 24px;
-}
-
-.paper-grid {
-  background-image:
-    linear-gradient(rgba(17, 17, 17, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 17, 17, 0.04) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-.editorial-rule {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(17, 17, 17, 0.45), transparent);
-}
-
-/* Atomic Star Decoration */
-.atomic-star {
-  position: relative;
-}
-
-.atomic-star::before {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: var(--coral);
-  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-}
-
-/* Boomerang Decorative Element */
-.boomerang {
-  width: 60px;
-  height: 30px;
-  border: 3px solid var(--turquoise);
-  border-radius: 50% 50% 0 0;
-  border-bottom: none;
-  transform: rotate(-30deg);
-}
-
-/* Mid-Century Divider */
-.divider-retro {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.divider-retro::before,
-.divider-retro::after {
-  content: '';
-  flex: 1;
-  height: 2px;
+.button-primary {
+  border: 1px solid var(--charcoal);
   background: var(--charcoal);
+  color: var(--cream);
+}
+
+.button-secondary {
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: white;
+  color: var(--charcoal);
+}
+
+.button-primary:hover,
+.button-secondary:hover {
+  transform: translateY(-1px);
 }
 
 @utility text-balance {
   text-wrap: balance;
-}
-
-@utility perspective-1000 {
-  perspective: 1000px;
-}
-
-@utility preserve-3d {
-  transform-style: preserve-3d;
-}
-
-@utility backface-hidden {
-  backface-visibility: hidden;
 }
