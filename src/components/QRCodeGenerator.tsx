@@ -178,6 +178,7 @@ export function QRCodeGenerator() {
 
   const [cardName, setCardName] = useState('');
   const [cardHeadline, setCardHeadline] = useState('Scan to connect');
+  const [cardEventName, setCardEventName] = useState(eventConfig.eventName);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isQrReady, setIsQrReady] = useState(false);
   const [isDownloadingCard, setIsDownloadingCard] = useState(false);
@@ -202,6 +203,7 @@ export function QRCodeGenerator() {
   const qrData = buildQRData(qrState);
   const cardPrimaryLabel = cardName || 'Your Name';
   const cardSecondaryLabel = cardHeadline || 'Scan to connect';
+  const cardEventLabel = cardEventName || eventConfig.eventName;
   const cardValue = getCardDisplayValue(qrState);
   const cardDateLabel = formatEventDateRange(
     eventData.startDate || eventConfig.startsAt,
@@ -373,6 +375,7 @@ export function QRCodeGenerator() {
     setLogoMargin(DEFAULT_VISUAL_OPTIONS.logoMargin);
     setCardName('');
     setCardHeadline('Scan to connect');
+    setCardEventName(eventConfig.eventName);
     setCardDownloadError(null);
     setQrExportFeedback(null);
     setCardExportFeedback(null);
@@ -445,7 +448,7 @@ export function QRCodeGenerator() {
       if (share && canShareFiles) {
         await share({
           files: [file],
-          title: `${eventConfig.eventName} card`,
+          title: `${cardEventLabel} card`,
           text: 'Save this card to Photos for quick access.',
         });
         setCardExportFeedback('Share sheet opened. Save the image to Photos or Files.');
@@ -704,6 +707,16 @@ export function QRCodeGenerator() {
               />
             </div>
             <div>
+              <label className="field-label">Event</label>
+              <input
+                type="text"
+                value={cardEventName}
+                onChange={(event) => setCardEventName(event.target.value)}
+                placeholder="Event name"
+                className="soft-input mt-2"
+              />
+            </div>
+            <div className="sm:col-span-2">
               <label className="field-label">Card note</label>
               <input
                 type="text"
@@ -996,7 +1009,7 @@ export function QRCodeGenerator() {
               <div className="grid gap-4 text-sm text-charcoal/75">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Event</p>
-                  <p className="mt-1 text-base font-semibold text-charcoal">{eventConfig.eventName}</p>
+                  <p className="mt-1 text-base font-semibold text-charcoal">{cardEventLabel}</p>
                 </div>
                 {cardVenueLabel && (
                   <div>
