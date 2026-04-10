@@ -12,9 +12,8 @@ import QRCodeStyling, {
   Options,
 } from 'qr-code-styling';
 import {
-  AtSign,
-  BriefcaseBusiness,
   Download,
+  Globe,
   Image as ImageIcon,
   Link2,
   RotateCcw,
@@ -40,11 +39,27 @@ interface QRVisualOptions {
 
 type LinkType = 'website' | 'x' | 'linkedin' | 'custom';
 
+function XLogoIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M18.244 2H21.5l-7.11 8.128L22.75 22h-6.544l-5.123-6.707L5.215 22H1.957l7.606-8.694L1.5 2h6.71l4.63 6.118L18.244 2Zm-1.142 18h1.804L7.227 3.895H5.29L17.102 20Z" />
+    </svg>
+  );
+}
+
+function LinkedInLogoIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M4.98 3.5C4.98 4.88 3.87 6 2.49 6S0 4.88 0 3.5 1.11 1 2.49 1s2.49 1.12 2.49 2.5ZM.5 8h4V23h-4V8Zm6.5 0h3.83v2.05h.06c.53-1.01 1.84-2.08 3.79-2.08 4.05 0 4.8 2.66 4.8 6.12V23h-4v-7.88c0-1.88-.03-4.29-2.61-4.29-2.62 0-3.02 2.05-3.02 4.16V23H7V8Z" />
+    </svg>
+  );
+}
+
 const LINK_TYPES: { value: LinkType; label: string; icon: React.ReactNode }[] = [
-  { value: 'website', label: 'Website', icon: <Link2 className="h-4 w-4" /> },
-  { value: 'x', label: 'X', icon: <AtSign className="h-4 w-4" /> },
-  { value: 'linkedin', label: 'LinkedIn', icon: <BriefcaseBusiness className="h-4 w-4" /> },
-  { value: 'custom', label: 'Other', icon: <Link2 className="h-4 w-4" /> },
+  { value: 'website', label: 'Website', icon: <Globe className="h-5 w-5" /> },
+  { value: 'x', label: 'X', icon: <XLogoIcon className="h-5 w-5" /> },
+  { value: 'linkedin', label: 'LinkedIn', icon: <LinkedInLogoIcon className="h-5 w-5" /> },
+  { value: 'custom', label: 'Other', icon: <Link2 className="h-5 w-5" /> },
 ];
 
 const COLOR_PRESETS = [
@@ -176,7 +191,7 @@ function getDestinationLabel(linkType: LinkType, destination: string) {
 function getInputHint(linkType: LinkType) {
   switch (linkType) {
     case 'x':
-      return 'Add just the handle, for example sergiopesch';
+      return 'Add just the handle, for example elonmusk';
     case 'linkedin':
       return 'Add your LinkedIn public handle or paste the full URL';
     case 'custom':
@@ -409,7 +424,7 @@ export function QRCodeGenerator() {
             type="text"
             value={xHandle}
             onChange={(event) => setXHandle(event.target.value)}
-            placeholder="yourhandle"
+            placeholder="elonmusk"
             className={inputClass}
           />
         );
@@ -419,7 +434,7 @@ export function QRCodeGenerator() {
             type="text"
             value={linkedinHandle}
             onChange={(event) => setLinkedinHandle(event.target.value)}
-            placeholder="your-name"
+            placeholder="in/your-name"
             className={inputClass}
           />
         );
@@ -477,10 +492,12 @@ export function QRCodeGenerator() {
                     <button
                       key={type.value}
                       onClick={() => setLinkType(type.value)}
-                      className={`chip-button type-tab ${linkType === type.value ? 'chip-button-active' : ''}`}
+                      aria-label={type.label}
+                      title={type.label}
+                      className={`chip-button type-tab flex-col gap-2 px-3 py-3 ${linkType === type.value ? 'chip-button-active' : ''}`}
                     >
-                      {type.icon}
-                      {type.label}
+                      <span className="text-base">{type.icon}</span>
+                      <span className="text-[11px] uppercase tracking-[0.18em]">{type.label}</span>
                     </button>
                   ))}
                 </div>
