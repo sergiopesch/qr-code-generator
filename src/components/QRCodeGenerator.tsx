@@ -441,7 +441,7 @@ export function QRCodeGenerator() {
             type="text"
             value={xHandle}
             onChange={(event) => setXHandle(event.target.value)}
-            placeholder="elonmusk"
+            placeholder="X handle"
             className={inputClass}
           />
         );
