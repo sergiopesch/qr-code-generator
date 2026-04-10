@@ -231,6 +231,66 @@ input[type="checkbox"]:checked::after {
   color: var(--cream);
 }
 
+.type-tabs-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  margin-inline: -0.1rem;
+  scrollbar-width: none;
+}
+
+.type-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.type-tabs-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(8.75rem, 1fr);
+  gap: 0.5rem;
+}
+
+.type-tab {
+  min-height: 3rem;
+  white-space: nowrap;
+}
+
+.type-panel-sticky {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+}
+
+@media (min-width: 1024px) {
+  .type-panel-sticky {
+    position: static;
+    top: auto;
+  }
+}
+
+.panel-transition {
+  animation: panel-fade-slide 0.22s ease;
+  transform-origin: top center;
+}
+
+@keyframes panel-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .type-tabs-track {
+    grid-auto-columns: 1fr;
+  }
+}
+
 .meta-pill {
   display: inline-flex;
   align-items: center;

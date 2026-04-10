@@ -13,13 +13,18 @@ import QRCodeStyling, {
 } from 'qr-code-styling';
 import {
   Calendar,
+  Clock3,
   Download,
+  FileText,
   Image as ImageIcon,
+  KeyRound,
   Link,
   Mail,
   MapPin,
   Phone,
   RotateCcw,
+  Router,
+  ScrollText,
   Trash2,
   Type,
   Wifi,
@@ -29,7 +34,6 @@ import {
   assessQRScanSafety,
   buildQRData,
   DEFAULT_EMAIL_DATA,
-  DEFAULT_EVENT_DATA,
   DEFAULT_LOCATION_DATA,
   DEFAULT_PHONE,
   DEFAULT_TEXT,
@@ -67,14 +71,49 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
-const QR_TYPES: { value: QRType; label: string; icon: React.ReactNode }[] = [
-  { value: 'url', label: 'URL', icon: <Link className="h-4 w-4" /> },
-  { value: 'text', label: 'Text', icon: <Type className="h-4 w-4" /> },
-  { value: 'wifi', label: 'WiFi', icon: <Wifi className="h-4 w-4" /> },
-  { value: 'email', label: 'Email', icon: <Mail className="h-4 w-4" /> },
-  { value: 'phone', label: 'Phone', icon: <Phone className="h-4 w-4" /> },
-  { value: 'location', label: 'Location', icon: <MapPin className="h-4 w-4" /> },
-  { value: 'event', label: 'Event', icon: <Calendar className="h-4 w-4" /> },
+const QR_TYPES: { value: QRType; label: string; icon: React.ReactNode; description: string }[] = [
+  {
+    value: 'event',
+    label: 'Event',
+    icon: <Calendar className="h-4 w-4" />,
+    description: 'Share an event title, time, venue, and summary in one scan.',
+  },
+  {
+    value: 'url',
+    label: 'URL',
+    icon: <Link className="h-4 w-4" />,
+    description: 'Open a website, landing page, or portfolio instantly.',
+  },
+  {
+    value: 'text',
+    label: 'Text',
+    icon: <Type className="h-4 w-4" />,
+    description: 'Show plain text, notes, or a short message.',
+  },
+  {
+    value: 'wifi',
+    label: 'WiFi',
+    icon: <Wifi className="h-4 w-4" />,
+    description: 'Let people join a WiFi network without typing credentials.',
+  },
+  {
+    value: 'email',
+    label: 'Email',
+    icon: <Mail className="h-4 w-4" />,
+    description: 'Start an email with recipient, subject, and message.',
+  },
+  {
+    value: 'phone',
+    label: 'Phone',
+    icon: <Phone className="h-4 w-4" />,
+    description: 'Start a phone call from a single tap after scanning.',
+  },
+  {
+    value: 'location',
+    label: 'Location',
+    icon: <MapPin className="h-4 w-4" />,
+    description: 'Open map coordinates for a venue or meeting point.',
+  },
 ];
 
 const COLOR_PRESETS = [
@@ -152,20 +191,86 @@ function previewLabel(qrType: QRType) {
   return QR_TYPES.find((type) => type.value === qrType)?.label ?? 'QR';
 }
 
+function getSelectedType(qrType: QRType) {
+  return QR_TYPES.find((type) => type.value === qrType) ?? QR_TYPES[0];
+}
+
+function getDataSectionCopy(qrType: QRType) {
+  switch (qrType) {
+    case 'event':
+      return {
+        title: 'Event details',
+        description: 'Only event-specific fields appear here so the form stays focused.',
+      };
+    case 'url':
+      return {
+        title: 'Destination URL',
+        description: 'Paste the page you want people to open after scanning.',
+      };
+    case 'text':
+      return {
+        title: 'Text content',
+        description: 'Use this for plain text, a short message, or instructions.',
+      };
+    case 'wifi':
+      return {
+        title: 'WiFi access',
+        description: 'Add the network name, password, and security type.',
+      };
+    case 'email':
+      return {
+        title: 'Email draft',
+        description: 'Pre-fill the email recipient and optional subject or body.',
+      };
+    case 'phone':
+      return {
+        title: 'Phone number',
+        description: 'Scanning will prompt the user to call this number.',
+      };
+    case 'location':
+      return {
+        title: 'Map coordinates',
+        description: 'Provide latitude and longitude for the destination.',
+      };
+    default:
+      return {
+        title: 'Data',
+        description: 'Add the content you want to encode in the QR code.',
+      };
+  }
+}
+
+function getDefaultEventData(): EventData {
+  return {
+    title: eventConfig.eventName !== 'Your Event' ? eventConfig.eventName : '',
+    startDate: eventConfig.startsAt,
+    endDate: eventConfig.endsAt,
+    location: eventConfig.locationLabel || eventConfig.venueName || eventConfig.venueAddress,
+    description: eventConfig.heroDescription,
+  };
+}
+
+function getDefaultLocationData(): LocationData {
+  return {
+    latitude: eventConfig.location.latitude?.toString() || DEFAULT_LOCATION_DATA.latitude,
+    longitude: eventConfig.location.longitude?.toString() || DEFAULT_LOCATION_DATA.longitude,
+  };
+}
+
 export function QRCodeGenerator() {
   const qrCode = useRef<QRCodeStyling | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const [qrType, setQrType] = useState<QRType>('url');
+  const [qrType, setQrType] = useState<QRType>('event');
   const [urlData, setUrlData] = useState(DEFAULT_URL);
   const [textData, setTextData] = useState(DEFAULT_TEXT);
   const [phoneData, setPhoneData] = useState(DEFAULT_PHONE);
   const [wifiData, setWifiData] = useState<WifiData>(DEFAULT_WIFI_DATA);
   const [emailData, setEmailData] = useState<EmailData>(DEFAULT_EMAIL_DATA);
-  const [locationData, setLocationData] = useState<LocationData>(DEFAULT_LOCATION_DATA);
-  const [eventData, setEventData] = useState<EventData>(DEFAULT_EVENT_DATA);
+  const [locationData, setLocationData] = useState<LocationData>(getDefaultLocationData);
+  const [eventData, setEventData] = useState<EventData>(getDefaultEventData);
 
   const [dotColor, setDotColor] = useState(DEFAULT_VISUAL_OPTIONS.dotColor);
   const [backgroundColor, setBackgroundColor] = useState(DEFAULT_VISUAL_OPTIONS.backgroundColor);
@@ -177,7 +282,7 @@ export function QRCodeGenerator() {
   const [logoMargin, setLogoMargin] = useState(DEFAULT_VISUAL_OPTIONS.logoMargin);
 
   const [cardName, setCardName] = useState('');
-  const [cardHeadline, setCardHeadline] = useState('Scan to connect');
+  const [cardHeadline, setCardHeadline] = useState(eventConfig.cardCallout);
   const [cardEventName, setCardEventName] = useState(eventConfig.eventName);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isQrReady, setIsQrReady] = useState(false);
@@ -201,6 +306,8 @@ export function QRCodeGenerator() {
   };
 
   const qrData = buildQRData(qrState);
+  const selectedType = getSelectedType(qrType);
+  const dataSectionCopy = getDataSectionCopy(qrType);
   const cardPrimaryLabel = cardName || 'Your Name';
   const cardSecondaryLabel = cardHeadline || 'Scan to connect';
   const cardEventLabel = cardEventName || eventConfig.eventName;
@@ -210,6 +317,7 @@ export function QRCodeGenerator() {
     eventData.endDate || eventConfig.endsAt
   );
   const cardVenueLabel = eventData.location || eventConfig.venueName || eventConfig.venueAddress;
+  const showEventCardFields = qrType === 'event';
   const scanAssessment: QRScanAssessment = assessQRScanSafety({
     dotColor,
     backgroundColor,
@@ -357,14 +465,14 @@ export function QRCodeGenerator() {
   }
 
   function resetToDefaults() {
-    setQrType('url');
+    setQrType('event');
     setUrlData(DEFAULT_URL);
     setTextData(DEFAULT_TEXT);
     setPhoneData(DEFAULT_PHONE);
     setWifiData(DEFAULT_WIFI_DATA);
     setEmailData(DEFAULT_EMAIL_DATA);
-    setLocationData(DEFAULT_LOCATION_DATA);
-    setEventData(DEFAULT_EVENT_DATA);
+    setLocationData(getDefaultLocationData());
+    setEventData(getDefaultEventData());
     setDotColor(DEFAULT_VISUAL_OPTIONS.dotColor);
     setBackgroundColor(DEFAULT_VISUAL_OPTIONS.backgroundColor);
     setCornerSquareColor(DEFAULT_VISUAL_OPTIONS.cornerSquareColor);
@@ -374,7 +482,7 @@ export function QRCodeGenerator() {
     setLogoSize(DEFAULT_VISUAL_OPTIONS.logoSize);
     setLogoMargin(DEFAULT_VISUAL_OPTIONS.logoMargin);
     setCardName('');
-    setCardHeadline('Scan to connect');
+    setCardHeadline(eventConfig.cardCallout);
     setCardEventName(eventConfig.eventName);
     setCardDownloadError(null);
     setQrExportFeedback(null);
@@ -484,164 +592,343 @@ export function QRCodeGenerator() {
     setDeferredInstallPrompt(null);
   }
 
+  function renderCardDetails() {
+    switch (qrType) {
+      case 'event':
+        return (
+          <>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Event</p>
+              <p className="mt-1 text-base font-semibold text-charcoal">{cardEventLabel}</p>
+            </div>
+            {cardVenueLabel && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Location</p>
+                <p className="mt-1">{cardVenueLabel}</p>
+              </div>
+            )}
+            {cardDateLabel && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">When</p>
+                <p className="mt-1">{cardDateLabel}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Details</p>
+              <p className="mt-1 break-words text-charcoal/80">{cardValue}</p>
+            </div>
+          </>
+        );
+      case 'wifi':
+        return (
+          <>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Network</p>
+              <p className="mt-1 text-base font-semibold text-charcoal">{wifiData.ssid || 'WiFi network'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Security</p>
+              <p className="mt-1">{wifiData.encryption === 'nopass' ? 'Open network' : wifiData.encryption}</p>
+            </div>
+          </>
+        );
+      case 'email':
+        return (
+          <>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Email</p>
+              <p className="mt-1 text-base font-semibold text-charcoal break-words">{emailData.address || 'email@example.com'}</p>
+            </div>
+            {emailData.subject && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Subject</p>
+                <p className="mt-1 break-words">{emailData.subject}</p>
+              </div>
+            )}
+          </>
+        );
+      case 'phone':
+        return (
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Phone</p>
+            <p className="mt-1 text-base font-semibold text-charcoal">{phoneData || DEFAULT_PHONE}</p>
+          </div>
+        );
+      case 'location':
+        return (
+          <>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Latitude</p>
+              <p className="mt-1 text-base font-semibold text-charcoal">{locationData.latitude || '0'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Longitude</p>
+              <p className="mt-1 text-base font-semibold text-charcoal">{locationData.longitude || '0'}</p>
+            </div>
+          </>
+        );
+      case 'text':
+        return (
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Message</p>
+            <p className="mt-1 break-words text-charcoal/80">{cardValue}</p>
+          </div>
+        );
+      case 'url':
+      default:
+        return (
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Destination</p>
+            <p className="mt-1 break-words text-charcoal/80">{cardValue}</p>
+          </div>
+        );
+    }
+  }
+
+  function renderFieldGroup(
+    label: string,
+    icon: React.ReactNode,
+    content: React.ReactNode,
+    helper?: string,
+    className = ''
+  ) {
+    return (
+      <div className={`rounded-2xl border border-charcoal/10 bg-white/70 p-3 sm:p-4 ${className}`}>
+        <div className="flex items-center gap-2 text-sm font-semibold text-charcoal">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-charcoal/10 bg-cream text-charcoal/70">
+            {icon}
+          </span>
+          <span>{label}</span>
+        </div>
+        {helper && <p className="mt-2 text-sm text-charcoal/55">{helper}</p>}
+        <div className="mt-3">{content}</div>
+      </div>
+    );
+  }
+
   function renderDataInput() {
     const inputClass = 'soft-input';
 
     switch (qrType) {
       case 'url':
-        return (
+        return renderFieldGroup(
+          'Website URL',
+          <Link className="h-4 w-4" />,
           <input
             type="url"
             value={urlData}
             onChange={(event) => setUrlData(event.target.value)}
             placeholder="https://example.com"
             className={inputClass}
-          />
+          />,
+          'Paste the full destination people should open after scanning.'
         );
       case 'text':
-        return (
+        return renderFieldGroup(
+          'Text message',
+          <FileText className="h-4 w-4" />,
           <textarea
             value={textData}
             onChange={(event) => setTextData(event.target.value)}
             placeholder="Add text"
             rows={4}
             className={`${inputClass} resize-none`}
-          />
+          />,
+          'Best for short notes, labels, or simple copy.'
         );
       case 'phone':
-        return (
+        return renderFieldGroup(
+          'Phone number',
+          <Phone className="h-4 w-4" />,
           <input
             type="tel"
             value={phoneData}
             onChange={(event) => setPhoneData(event.target.value)}
             placeholder="+1 234 567 8900"
             className={inputClass}
-          />
+          />,
+          'Use an international format when possible.'
         );
       case 'wifi':
         return (
           <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              type="text"
-              value={wifiData.ssid}
-              onChange={(event) => setWifiData({ ...wifiData, ssid: event.target.value })}
-              placeholder="Network name"
-              className={inputClass}
-            />
-            <input
-              type="password"
-              value={wifiData.password}
-              onChange={(event) => setWifiData({ ...wifiData, password: event.target.value })}
-              placeholder="Password"
-              className={inputClass}
-            />
-            <select
-              value={wifiData.encryption}
-              onChange={(event) =>
-                setWifiData({
-                  ...wifiData,
-                  encryption: event.target.value as WifiData['encryption'],
-                })
-              }
-              className={inputClass}
-            >
-              <option value="WPA">WPA / WPA2</option>
-              <option value="WEP">WEP</option>
-              <option value="nopass">No password</option>
-            </select>
-            <label className="flex items-center gap-3 rounded-2xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal">
+            {renderFieldGroup(
+              'Network name',
+              <Router className="h-4 w-4" />,
               <input
-                type="checkbox"
-                checked={wifiData.hidden}
-                onChange={(event) => setWifiData({ ...wifiData, hidden: event.target.checked })}
+                type="text"
+                value={wifiData.ssid}
+                onChange={(event) => setWifiData({ ...wifiData, ssid: event.target.value })}
+                placeholder="Network name"
+                className={inputClass}
               />
-              Hidden network
-            </label>
+            )}
+            {renderFieldGroup(
+              'Password',
+              <KeyRound className="h-4 w-4" />,
+              <input
+                type="password"
+                value={wifiData.password}
+                onChange={(event) => setWifiData({ ...wifiData, password: event.target.value })}
+                placeholder="Password"
+                className={inputClass}
+              />
+            )}
+            {renderFieldGroup(
+              'Security type',
+              <Wifi className="h-4 w-4" />,
+              <select
+                value={wifiData.encryption}
+                onChange={(event) =>
+                  setWifiData({
+                    ...wifiData,
+                    encryption: event.target.value as WifiData['encryption'],
+                  })
+                }
+                className={inputClass}
+              >
+                <option value="WPA">WPA / WPA2</option>
+                <option value="WEP">WEP</option>
+                <option value="nopass">No password</option>
+              </select>
+            )}
+            {renderFieldGroup(
+              'Advanced',
+              <ScrollText className="h-4 w-4" />,
+              <label className="flex items-center gap-3 rounded-2xl border border-charcoal/15 bg-white px-4 py-3 text-sm text-charcoal">
+                <input
+                  type="checkbox"
+                  checked={wifiData.hidden}
+                  onChange={(event) => setWifiData({ ...wifiData, hidden: event.target.checked })}
+                />
+                Hidden network
+              </label>
+            )}
           </div>
         );
       case 'email':
         return (
           <div className="grid gap-3">
-            <input
-              type="email"
-              value={emailData.address}
-              onChange={(event) => setEmailData({ ...emailData, address: event.target.value })}
-              placeholder="name@example.com"
-              className={inputClass}
-            />
-            <input
-              type="text"
-              value={emailData.subject}
-              onChange={(event) => setEmailData({ ...emailData, subject: event.target.value })}
-              placeholder="Subject"
-              className={inputClass}
-            />
-            <textarea
-              value={emailData.body}
-              onChange={(event) => setEmailData({ ...emailData, body: event.target.value })}
-              placeholder="Message"
-              rows={3}
-              className={`${inputClass} resize-none`}
-            />
+            {renderFieldGroup(
+              'Recipient',
+              <Mail className="h-4 w-4" />,
+              <input
+                type="email"
+                value={emailData.address}
+                onChange={(event) => setEmailData({ ...emailData, address: event.target.value })}
+                placeholder="name@example.com"
+                className={inputClass}
+              />
+            )}
+            {renderFieldGroup(
+              'Subject',
+              <Type className="h-4 w-4" />,
+              <input
+                type="text"
+                value={emailData.subject}
+                onChange={(event) => setEmailData({ ...emailData, subject: event.target.value })}
+                placeholder="Subject"
+                className={inputClass}
+              />
+            )}
+            {renderFieldGroup(
+              'Message',
+              <FileText className="h-4 w-4" />,
+              <textarea
+                value={emailData.body}
+                onChange={(event) => setEmailData({ ...emailData, body: event.target.value })}
+                placeholder="Message"
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+            )}
           </div>
         );
       case 'location':
         return (
           <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              type="text"
-              value={locationData.latitude}
-              onChange={(event) => setLocationData({ ...locationData, latitude: event.target.value })}
-              placeholder="Latitude"
-              className={inputClass}
-            />
-            <input
-              type="text"
-              value={locationData.longitude}
-              onChange={(event) => setLocationData({ ...locationData, longitude: event.target.value })}
-              placeholder="Longitude"
-              className={inputClass}
-            />
+            {renderFieldGroup(
+              'Latitude',
+              <MapPin className="h-4 w-4" />,
+              <input
+                type="text"
+                value={locationData.latitude}
+                onChange={(event) => setLocationData({ ...locationData, latitude: event.target.value })}
+                placeholder="Latitude"
+                className={inputClass}
+              />
+            )}
+            {renderFieldGroup(
+              'Longitude',
+              <MapPin className="h-4 w-4" />,
+              <input
+                type="text"
+                value={locationData.longitude}
+                onChange={(event) => setLocationData({ ...locationData, longitude: event.target.value })}
+                placeholder="Longitude"
+                className={inputClass}
+              />
+            )}
           </div>
         );
       case 'event':
         return (
           <div className="grid gap-3">
-            <input
-              type="text"
-              value={eventData.title}
-              onChange={(event) => setEventData({ ...eventData, title: event.target.value })}
-              placeholder="Event title"
-              className={inputClass}
-            />
+            {renderFieldGroup(
+              'Event title',
+              <Calendar className="h-4 w-4" />,
+              <input
+                type="text"
+                value={eventData.title}
+                onChange={(event) => setEventData({ ...eventData, title: event.target.value })}
+                placeholder="Event title"
+                className={inputClass}
+              />
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                type="datetime-local"
-                value={eventData.startDate}
-                onChange={(event) => setEventData({ ...eventData, startDate: event.target.value })}
-                className={inputClass}
-              />
-              <input
-                type="datetime-local"
-                value={eventData.endDate}
-                onChange={(event) => setEventData({ ...eventData, endDate: event.target.value })}
-                className={inputClass}
-              />
+              {renderFieldGroup(
+                'Start date',
+                <Clock3 className="h-4 w-4" />,
+                <input
+                  type="datetime-local"
+                  value={eventData.startDate}
+                  onChange={(event) => setEventData({ ...eventData, startDate: event.target.value })}
+                  className={inputClass}
+                />
+              )}
+              {renderFieldGroup(
+                'End date',
+                <Clock3 className="h-4 w-4" />,
+                <input
+                  type="datetime-local"
+                  value={eventData.endDate}
+                  onChange={(event) => setEventData({ ...eventData, endDate: event.target.value })}
+                  className={inputClass}
+                />
+              )}
             </div>
-            <input
-              type="text"
-              value={eventData.location}
-              onChange={(event) => setEventData({ ...eventData, location: event.target.value })}
-              placeholder="Location"
-              className={inputClass}
-            />
-            <textarea
-              value={eventData.description}
-              onChange={(event) => setEventData({ ...eventData, description: event.target.value })}
-              placeholder="Description"
-              rows={3}
-              className={`${inputClass} resize-none`}
-            />
+            {renderFieldGroup(
+              'Location',
+              <MapPin className="h-4 w-4" />,
+              <input
+                type="text"
+                value={eventData.location}
+                onChange={(event) => setEventData({ ...eventData, location: event.target.value })}
+                placeholder="Location"
+                className={inputClass}
+              />
+            )}
+            {renderFieldGroup(
+              'Description',
+              <FileText className="h-4 w-4" />,
+              <textarea
+                value={eventData.description}
+                onChange={(event) => setEventData({ ...eventData, description: event.target.value })}
+                placeholder="Description"
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+            )}
           </div>
         );
       default:
@@ -670,29 +957,40 @@ export function QRCodeGenerator() {
         </div>
 
         <div className="mt-6 grid gap-4">
-          <div className="panel-shell">
-            <label className="field-label">Type</label>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
-              {QR_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  onClick={() => setQrType(type.value)}
-                  className={`chip-button ${
-                    qrType === type.value
-                      ? 'chip-button-active'
-                      : ''
-                  }`}
-                >
-                  {type.icon}
-                  {type.label}
-                </button>
-              ))}
+          <div className="panel-shell type-panel-sticky">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <label className="field-label">Type</label>
+                <p className="mt-2 text-sm text-charcoal/58">
+                  Pick the QR you want to build. The form below adapts to the selected type.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-charcoal/10 bg-white px-4 py-3 text-sm text-charcoal/68 lg:max-w-sm">
+                <p className="font-semibold text-charcoal">{selectedType.label}</p>
+                <p className="mt-1">{selectedType.description}</p>
+              </div>
+            </div>
+            <div className="type-tabs-scroll mt-4">
+              <div className="type-tabs-track">
+                {QR_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => setQrType(type.value)}
+                    className={`chip-button type-tab ${qrType === type.value ? 'chip-button-active' : ''}`}
+                    aria-pressed={qrType === type.value}
+                  >
+                    {type.icon}
+                    {type.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           <div className="panel-shell">
-            <label className="field-label">Data</label>
-            <div className="mt-3">{renderDataInput()}</div>
+            <label className="field-label">{dataSectionCopy.title}</label>
+            <p className="mt-2 text-sm text-charcoal/58">{dataSectionCopy.description}</p>
+            <div key={qrType} className="panel-transition mt-4">{renderDataInput()}</div>
           </div>
 
           <div className="panel-shell grid gap-4 sm:grid-cols-2">
@@ -706,17 +1004,19 @@ export function QRCodeGenerator() {
                 className="soft-input mt-2"
               />
             </div>
-            <div>
-              <label className="field-label">Event</label>
-              <input
-                type="text"
-                value={cardEventName}
-                onChange={(event) => setCardEventName(event.target.value)}
-                placeholder="Event name"
-                className="soft-input mt-2"
-              />
-            </div>
-            <div className="sm:col-span-2">
+            {showEventCardFields && (
+              <div>
+                <label className="field-label">Event</label>
+                <input
+                  type="text"
+                  value={cardEventName}
+                  onChange={(event) => setCardEventName(event.target.value)}
+                  placeholder="Event name"
+                  className="soft-input mt-2"
+                />
+              </div>
+            )}
+            <div className={showEventCardFields ? 'sm:col-span-2' : ''}>
               <label className="field-label">Card note</label>
               <input
                 type="text"
@@ -894,6 +1194,10 @@ export function QRCodeGenerator() {
             </span>
           </div>
 
+          <p className="mt-3 text-sm text-charcoal/58">
+            {selectedType.description}
+          </p>
+
           <div className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">
             <div className="mx-auto flex aspect-square w-full max-w-[360px] items-center justify-center rounded-[28px] border border-charcoal/10 bg-white">
               {previewUrl ? (
@@ -1007,26 +1311,7 @@ export function QRCodeGenerator() {
 
             <div className="mt-6 grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
               <div className="grid gap-4 text-sm text-charcoal/75">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Event</p>
-                  <p className="mt-1 text-base font-semibold text-charcoal">{cardEventLabel}</p>
-                </div>
-                {cardVenueLabel && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Location</p>
-                    <p className="mt-1">{cardVenueLabel}</p>
-                  </div>
-                )}
-                {cardDateLabel && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">When</p>
-                    <p className="mt-1">{cardDateLabel}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Details</p>
-                  <p className="mt-1 break-words text-charcoal/80">{cardValue}</p>
-                </div>
+                {renderCardDetails()}
               </div>
 
               <div className="mx-auto rounded-[28px] bg-white p-4 shadow-[0_16px_32px_rgba(17,17,17,0.12)] sm:mx-0">

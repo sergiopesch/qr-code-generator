@@ -28,42 +28,49 @@ QR Studio is designed to be easy to share as a public link so anyone can quickly
 
 - **Fast public utility** - anyone can generate a QR code from a shared link
 - **Real-time preview** - QR codes update as content changes
+- **Adaptive QR workflow** - the form, preview copy, and card details respond to the selected QR type
 - **Flexible content types** - generate common QR payloads for event use
 - **Custom styling** - colors, shapes, size, corners, and logo support
 - **Reusable event template** - tune copy, branding, venue, and schedule through config
 - **Phone-first card flow** - generate a meetup card people can save to Photos and reopen fast
 - **Fast export** - download the meetup card image or the raw QR as PNG, SVG, or JPEG
 
-The preview includes a stylized 3D presentation effect. Exported files preserve the QR styling and logo, but not the CSS-only perspective animation from the page.
+The UI now keeps **Event** as the primary/default QR type, uses mobile-friendly sticky type tabs, and shows only the inputs relevant to the active payload.
 
 ## Features
 
 ### QR Code Types
+- Event QR (default, first in the selector)
 - URL links
 - Plain text
 - WiFi credentials (auto-connect)
 - Email with subject and body
 - Phone numbers
 - Geographic locations
-- Calendar events (vCalendar payload)
+
+### Adaptive UI / UX
+- Event-first workflow for meetup and conference usage
+- Type-specific input panels instead of one generic form
+- Type-specific descriptions in the selector and preview
+- Type-specific presentation card details
+- Mobile-friendly horizontal type tabs
+- Sticky type selector on smaller screens for faster switching
+- Smooth transitions when switching between QR types
 
 ### Styling Options
-- 6 reusable color presets
+- Reusable color presets
 - Custom color controls for dots, background, and corners
-- 6 dot pattern styles (square, dots, rounded, classy, etc.)
-- Corner square and dot customization
-- 4 error correction levels
-- Adjustable size (150-400px)
+- Error correction controls with scan-safety feedback
+- Logo upload with size and margin controls
 
-### Logo Fusion
-- Upload custom logos/images
-- Automatic high error correction when logo is added
-- Adjustable logo size (15-50%)
-- Logo margin control
-- Enhanced preview treatment on the page
+### Smart Defaults
+- Event payload fields prefilled from `src/config/event.ts`
+- Card note defaults from `eventConfig.cardCallout`
+- Location QR can preload configured latitude and longitude
+- Reset returns the app to the default Event flow
 
 ### Export Options
-- Conference card image (phone-friendly)
+- Presentation card image (phone-friendly)
 - PNG (web-optimized)
 - SVG (print-quality vectors)
 - JPEG (compressed)
@@ -132,43 +139,37 @@ npm start
 
 ### Creating a QR Code
 
-1. Select the QR code type from the collapsible Type section
-2. Enter your content (URL, text, WiFi details, etc.)
-3. Watch your QR code update in real-time in the preview
+1. Pick a QR type from the top selector
+2. Fill in only the fields shown for that QR type
+3. Watch the preview and card details update in real time
+4. Export either the raw QR or the presentation card
 
-### Applying Event Styles
+### Applying Styles
 
-1. Open the Colors section
-2. Choose from 6 pre-designed color presets:
-   - Ink
-   - Paper
-   - Fog
-   - Brass
-   - Blueprint
-   - Night
-3. Fine-tune with custom color pickers
+1. Open the Style section
+2. Choose a preset such as `Ink`, `Sand`, `Mist`, or `Night`
+3. Fine-tune dots, background, and corner colors
+4. Check the scan-safety panel before exporting
 
-### Logo Fusion
+### Adding a Logo
 
-1. Open the Logo Fusion section
+1. Open the Logo section
 2. Upload your logo image
-3. Adjust size (35% default, 15-50% range)
-4. Set margin for padding around logo
-5. Toggle 3D Float if you want the on-page preview animation
+3. Adjust logo size and margin if needed
+4. The app automatically raises error correction when a logo is present
 
-### Building A Meetup Card
+### Building a Presentation Card
 
-1. Open the Card section
-2. Add your display name, handle, or team
-3. Add a short line about what you build or want to talk about
-4. Use **Save Card** to export a phone-ready meetup card image
+1. Add your display name
+2. Add a short card note
+3. If the active type is `Event`, optionally customize the event name shown on the card
+4. Export the phone-ready card image
 
 ### Notes on Preview vs Export
 
-- **Hover** over the QR code to flatten and enlarge the preview
-- **Toggle 3D Float** to enable or disable the floating page effect
-- Exported files include the QR design and embedded logo, but not the CSS perspective or hover animation
-- The meetup card export uses the active event config plus the card details you enter in the UI
+- The app preview is optimized for on-screen editing and validation
+- Exported files preserve the QR styling and embedded logo
+- The presentation card adapts its metadata layout to the selected QR type
 
 ## Project Structure
 
@@ -231,6 +232,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
 
 ## Changelog
+
+### v3.1.0 (April 10, 2026)
+- Reworked the generator into an adaptive, type-aware UI
+- Kept Event as the first and default QR type
+- Added mobile-friendly horizontal type tabs and sticky selector behavior
+- Added smoother panel transitions when switching QR types
+- Made the presentation card respond to the active QR type instead of always showing event-shaped metadata
+- Added smarter defaults from `eventConfig` for event and location flows
+- Improved README documentation to reflect the current UX
 
 ### v3.0.0 (April 7, 2026)
 - Repositioned the app as a lightweight public QR utility for events
