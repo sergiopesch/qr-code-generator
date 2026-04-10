@@ -191,7 +191,7 @@ function getDestinationLabel(linkType: LinkType, destination: string) {
 function getInputHint(linkType: LinkType) {
   switch (linkType) {
     case 'x':
-      return 'Add just the handle, for example elonmusk';
+      return 'Add just the handle';
     case 'linkedin':
       return 'Add your LinkedIn public handle or paste the full URL';
     case 'custom':
