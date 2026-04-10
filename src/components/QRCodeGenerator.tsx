@@ -207,6 +207,7 @@ export function QRCodeGenerator() {
   const previewUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const previewSectionRef = useRef<HTMLElement>(null);
 
   const [linkType, setLinkType] = useState<LinkType>(DEFAULT_STATE.linkType);
   const [websiteUrl, setWebsiteUrl] = useState(DEFAULT_STATE.websiteUrl);
@@ -321,6 +322,16 @@ export function QRCodeGenerator() {
     return () => window.clearTimeout(timer);
   }, [qrExportFeedback, cardExportFeedback, cardDownloadError]);
 
+  useEffect(() => {
+    if (!hasGenerated || !previewUrl) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      previewSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }, [hasGenerated, previewUrl]);
+
   function applyColorPreset(preset: (typeof COLOR_PRESETS)[number]) {
     setDotColor(preset.dot);
     setBackgroundColor(preset.bg);
@@ -377,15 +388,19 @@ export function QRCodeGenerator() {
       return;
     }
 
-    const rawData = await qrCode.current.getRawData(format);
-    if (!rawData) {
-      return;
-    }
+    try {
+      const rawData = await qrCode.current.getRawData(format);
+      if (!rawData) {
+        throw new Error('Unable to create the QR file.');
+      }
 
-    const mimeType = format === 'svg' ? 'image/svg+xml' : `image/${format}`;
-    const blob = rawData instanceof Blob ? rawData : new Blob([new Uint8Array(rawData)], { type: mimeType });
-    downloadBlob(blob, createFileName('qr-code', format));
-    setQrExportFeedback(`${format.toUpperCase()} downloaded.`);
+      const mimeType = format === 'svg' ? 'image/svg+xml' : `image/${format}`;
+      const blob = rawData instanceof Blob ? rawData : new Blob([new Uint8Array(rawData)], { type: mimeType });
+      downloadBlob(blob, createFileName(`${linkType}-qr`, format));
+      setQrExportFeedback(`${format.toUpperCase()} downloaded.`);
+    } catch (error) {
+      setQrExportFeedback(error instanceof Error ? error.message : 'Unable to export the QR code.');
+    }
   }
 
   async function downloadPresentationCard() {
@@ -535,11 +550,11 @@ export function QRCodeGenerator() {
               </div>
             </div>
 
-            <div className="panel-shell">
+            <div className="panel-shell border-charcoal/6 bg-white/55">
               <div className="flex items-center justify-between gap-3">
                 <label className="field-label">Style</label>
-                <span className="text-xs uppercase tracking-[0.18em] text-charcoal/45">
-                  {logo ? 'Logo mode' : 'Clean mode'}
+                <span className="text-xs uppercase tracking-[0.18em] text-charcoal/40">
+                  Optional
                 </span>
               </div>
 
@@ -557,15 +572,15 @@ export function QRCodeGenerator() {
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3 sm:max-w-xs">
-                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/45">
                   Dots
-                  <input type="color" value={dotColor} onChange={(event) => setDotColor(event.target.value)} className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1" />
+                  <input type="color" value={dotColor} onChange={(event) => setDotColor(event.target.value)} className="h-10 w-full rounded-xl border border-charcoal/10 bg-white p-1" />
                 </label>
-                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/45">
                   Background
-                  <input type="color" value={backgroundColor} onChange={(event) => setBackgroundColor(event.target.value)} className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1" />
+                  <input type="color" value={backgroundColor} onChange={(event) => setBackgroundColor(event.target.value)} className="h-10 w-full rounded-xl border border-charcoal/10 bg-white p-1" />
                 </label>
-                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/45">
                   Corners
                   <input
                     type="color"
@@ -574,7 +589,7 @@ export function QRCodeGenerator() {
                       setCornerSquareColor(event.target.value);
                       setCornerDotColor(event.target.value);
                     }}
-                    className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1"
+                    className="h-10 w-full rounded-xl border border-charcoal/10 bg-white p-1"
                   />
                 </label>
               </div>
@@ -599,8 +614,11 @@ export function QRCodeGenerator() {
             </div>
           </div>
 
-          <div className="panel-shell">
-            <label className="field-label">Optional logo</label>
+          <div className="panel-shell border-charcoal/6 bg-white/55">
+            <div className="flex items-center justify-between gap-3">
+              <label className="field-label">Optional logo</label>
+              <span className="text-xs uppercase tracking-[0.18em] text-charcoal/40">Optional</span>
+            </div>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <input
                 ref={fileInputRef}
@@ -675,7 +693,7 @@ export function QRCodeGenerator() {
       </section>
 
       {hasGenerated ? (
-        <section className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <section ref={previewSectionRef} className="grid gap-6 lg:grid-cols-2 lg:items-start">
           <div className="card-shell">
             <div className="flex items-start justify-between gap-4">
               <div>
