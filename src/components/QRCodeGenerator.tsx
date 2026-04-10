@@ -226,6 +226,7 @@ export function QRCodeGenerator() {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isQrReady, setIsQrReady] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const [isDownloadingCard, setIsDownloadingCard] = useState(false);
   const [cardDownloadError, setCardDownloadError] = useState<string | null>(null);
   const [qrExportFeedback, setQrExportFeedback] = useState<string | null>(null);
@@ -342,6 +343,7 @@ export function QRCodeGenerator() {
     setLogo(DEFAULT_VISUAL_OPTIONS.logo);
     setLogoSize(DEFAULT_VISUAL_OPTIONS.logoSize);
     setLogoMargin(DEFAULT_VISUAL_OPTIONS.logoMargin);
+    setHasGenerated(false);
     setCardDownloadError(null);
     setQrExportFeedback(null);
     setCardExportFeedback(null);
@@ -485,7 +487,12 @@ export function QRCodeGenerator() {
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="grid gap-4">
             <div className="panel-shell">
-              <label className="field-label">Where should the QR go?</label>
+              <div className="flex items-center justify-between gap-3">
+                <label className="field-label">Where should the QR go?</label>
+                <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-charcoal/55">
+                  {LINK_TYPES.find((type) => type.value === linkType)?.label}
+                </span>
+              </div>
               <div className="type-tabs-scroll mt-3">
                 <div className="type-tabs-track">
                   {LINK_TYPES.map((type) => (
@@ -494,10 +501,9 @@ export function QRCodeGenerator() {
                       onClick={() => setLinkType(type.value)}
                       aria-label={type.label}
                       title={type.label}
-                      className={`chip-button type-tab flex-col gap-2 px-3 py-3 ${linkType === type.value ? 'chip-button-active' : ''}`}
+                      className={`chip-button type-tab justify-center px-3 py-4 ${linkType === type.value ? 'chip-button-active' : ''}`}
                     >
-                      <span className="text-base">{type.icon}</span>
-                      <span className="text-[11px] uppercase tracking-[0.18em]">{type.label}</span>
+                      <span className="text-lg">{type.icon}</span>
                     </button>
                   ))}
                 </div>
@@ -571,6 +577,24 @@ export function QRCodeGenerator() {
                     className="h-11 w-full rounded-xl border border-charcoal/15 bg-white p-1"
                   />
                 </label>
+              </div>
+            </div>
+
+            <div className="panel-shell">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <label className="field-label">Ready?</label>
+                  <p className="mt-2 text-sm text-charcoal/58">
+                    When everything looks right, generate the QR and card preview.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setHasGenerated(true)}
+                  disabled={!scanAssessment.isSafe}
+                  className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Generate
+                </button>
               </div>
             </div>
           </div>
@@ -650,141 +674,153 @@ export function QRCodeGenerator() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <div className="card-shell">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="section-kicker">Preview</p>
-              <h2 className="section-title">QR code</h2>
-            </div>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
-              {destinationLabel}
-            </span>
-          </div>
-
-          <div className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">
-            <div className="mx-auto flex aspect-square w-full max-w-[360px] items-center justify-center rounded-[28px] border border-charcoal/10 bg-white">
-              {previewUrl ? (
-                <Image
-                  src={previewUrl}
-                  alt="QR code preview"
-                  width={360}
-                  height={360}
-                  unoptimized
-                  className="h-full w-full rounded-[24px] object-contain"
-                />
-              ) : (
-                <div className="h-full w-full animate-pulse rounded-[24px] bg-charcoal/5" />
-              )}
-            </div>
-          </div>
-
-          <p className="mt-4 break-words text-sm text-charcoal/55">{destination}</p>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              onClick={() => exportQRCode('png')}
-              disabled={!isQrReady || !scanAssessment.isSafe}
-              className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" />
-              PNG
-            </button>
-            <button
-              onClick={() => exportQRCode('svg')}
-              disabled={!isQrReady || !scanAssessment.isSafe}
-              className="button-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              SVG
-            </button>
-            <button
-              onClick={() => exportQRCode('jpeg')}
-              disabled={!isQrReady || !scanAssessment.isSafe}
-              className="button-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              JPEG
-            </button>
-          </div>
-
-          {qrExportFeedback && <p className="mt-3 text-sm text-charcoal/60">{qrExportFeedback}</p>}
-        </div>
-
-        <div className="card-shell">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="section-kicker">Export</p>
-              <h2 className="section-title">Presentation card</h2>
-            </div>
-            <button
-              onClick={downloadPresentationCard}
-              disabled={isDownloadingCard || !previewUrl || !scanAssessment.isSafe}
-              className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" />
-              {isDownloadingCard ? 'Preparing' : 'Export'}
-            </button>
-          </div>
-
-          <p className="mt-3 text-sm text-charcoal/60">
-            A simple card you can save and show at an event.
-          </p>
-
-          <div
-            ref={cardRef}
-            className="mt-6 overflow-hidden rounded-[32px] border border-charcoal/12 bg-cream p-5 shadow-[0_24px_60px_rgba(17,17,17,0.08)] sm:p-7"
-            style={{
-              background:
-                'radial-gradient(circle at top right, rgba(176,138,60,0.16), transparent 26%), linear-gradient(180deg, #fbfaf6 0%, #f7f3ea 100%)',
-            }}
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-charcoal/12 pb-5">
+      {hasGenerated ? (
+        <section className="grid gap-6 lg:grid-cols-2 lg:items-start">
+          <div className="card-shell">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-charcoal/55">Presentation card</p>
-                <h3 className="mt-3 font-display text-4xl leading-none text-charcoal sm:text-5xl">
-                  {displayName || 'Your Name'}
-                </h3>
-                <p className="mt-3 max-w-[22rem] text-sm text-charcoal/72 sm:text-base">
-                  {headline || 'Scan to connect'}
-                </p>
+                <p className="section-kicker">Preview</p>
+                <h2 className="section-title">QR code</h2>
               </div>
-              <div className="rounded-full border border-charcoal/12 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/55">
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/55">
                 {destinationLabel}
-              </div>
+              </span>
             </div>
 
-            <div className="mt-6 grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-              <div className="grid gap-4 text-sm text-charcoal/75">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Link</p>
-                  <p className="mt-1 break-words text-base font-semibold text-charcoal">{destination}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Use</p>
-                  <p className="mt-1">Let people scan this card to open your profile or website.</p>
-                </div>
-              </div>
-
-              <div className="mx-auto rounded-[28px] bg-white p-4 shadow-[0_16px_32px_rgba(17,17,17,0.12)] sm:mx-0">
+            <div className="mt-6 rounded-[32px] bg-white p-5 sm:p-8">
+              <div className="mx-auto flex aspect-square w-full max-w-[360px] items-center justify-center rounded-[28px] border border-charcoal/10 bg-white">
                 {previewUrl ? (
                   <Image
                     src={previewUrl}
-                    alt="Presentation card QR"
-                    width={160}
-                    height={160}
+                    alt="QR code preview"
+                    width={360}
+                    height={360}
                     unoptimized
-                    className="h-36 w-36 rounded-[20px] object-contain sm:h-40 sm:w-40"
+                    className="h-full w-full rounded-[24px] object-contain"
                   />
                 ) : (
-                  <div className="h-36 w-36 rounded-[20px] bg-charcoal/5 sm:h-40 sm:w-40" />
+                  <div className="h-full w-full animate-pulse rounded-[24px] bg-charcoal/5" />
                 )}
               </div>
             </div>
+
+            <p className="mt-4 break-words text-sm text-charcoal/55">{destination}</p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={() => exportQRCode('png')}
+                disabled={!isQrReady || !scanAssessment.isSafe}
+                className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" />
+                PNG
+              </button>
+              <button
+                onClick={() => exportQRCode('svg')}
+                disabled={!isQrReady || !scanAssessment.isSafe}
+                className="button-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                SVG
+              </button>
+              <button
+                onClick={() => exportQRCode('jpeg')}
+                disabled={!isQrReady || !scanAssessment.isSafe}
+                className="button-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                JPEG
+              </button>
+            </div>
+
+            {qrExportFeedback && <p className="mt-3 text-sm text-charcoal/60">{qrExportFeedback}</p>}
           </div>
 
-          {cardExportFeedback && <p className="mt-3 text-sm text-charcoal/60">{cardExportFeedback}</p>}
-          {cardDownloadError && <p className="mt-3 text-sm text-coral">{cardDownloadError}</p>}
-        </div>
-      </section>
+          <div className="card-shell">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="section-kicker">Export</p>
+                <h2 className="section-title">Presentation card</h2>
+              </div>
+              <button
+                onClick={downloadPresentationCard}
+                disabled={isDownloadingCard || !previewUrl || !scanAssessment.isSafe}
+                className="button-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Download className="h-4 w-4" />
+                {isDownloadingCard ? 'Preparing' : 'Export'}
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm text-charcoal/60">
+              A simple card you can save and show at an event.
+            </p>
+
+            <div
+              ref={cardRef}
+              className="mt-6 overflow-hidden rounded-[32px] border border-charcoal/12 bg-cream p-5 shadow-[0_24px_60px_rgba(17,17,17,0.08)] sm:p-7"
+              style={{
+                background:
+                  'radial-gradient(circle at top right, rgba(176,138,60,0.16), transparent 26%), linear-gradient(180deg, #fbfaf6 0%, #f7f3ea 100%)',
+              }}
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-charcoal/12 pb-5">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-charcoal/55">Presentation card</p>
+                  <h3 className="mt-3 font-display text-4xl leading-none text-charcoal sm:text-5xl">
+                    {displayName || 'Your Name'}
+                  </h3>
+                  <p className="mt-3 max-w-[22rem] text-sm text-charcoal/72 sm:text-base">
+                    {headline || 'Scan to connect'}
+                  </p>
+                </div>
+                <div className="rounded-full border border-charcoal/12 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-charcoal/55">
+                  {destinationLabel}
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                <div className="grid gap-4 text-sm text-charcoal/75">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Link</p>
+                    <p className="mt-1 break-words text-base font-semibold text-charcoal">{destination}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-charcoal/55">Use</p>
+                    <p className="mt-1">Let people scan this card to open your profile or website.</p>
+                  </div>
+                </div>
+
+                <div className="mx-auto rounded-[28px] bg-white p-4 shadow-[0_16px_32px_rgba(17,17,17,0.12)] sm:mx-0">
+                  {previewUrl ? (
+                    <Image
+                      src={previewUrl}
+                      alt="Presentation card QR"
+                      width={160}
+                      height={160}
+                      unoptimized
+                      className="h-36 w-36 rounded-[20px] object-contain sm:h-40 sm:w-40"
+                    />
+                  ) : (
+                    <div className="h-36 w-36 rounded-[20px] bg-charcoal/5 sm:h-40 sm:w-40" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {cardExportFeedback && <p className="mt-3 text-sm text-charcoal/60">{cardExportFeedback}</p>}
+            {cardDownloadError && <p className="mt-3 text-sm text-coral">{cardDownloadError}</p>}
+          </div>
+        </section>
+      ) : (
+        <section className="card-shell">
+          <div className="rounded-[28px] border border-dashed border-charcoal/14 bg-white/60 px-6 py-10 text-center">
+            <p className="section-kicker">Preview</p>
+            <h2 className="section-title">Nothing shown yet</h2>
+            <p className="mt-3 text-sm text-charcoal/58">
+              Choose the destination, fill your details, then click <span className="font-semibold text-charcoal">Generate</span>.
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
