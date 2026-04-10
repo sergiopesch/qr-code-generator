@@ -9,9 +9,9 @@ A lightweight event QR generator for quick sharing during events, meetups, and c
 
 ## Screenshot
 
-![Updated QR Studio interface](public/screenshots/qr-code-preview-updated.png)
+![Updated QR Studio interface](public/screenshots/qr-code-preview-updated-clean.png)
 
-_Adaptive QR workflow with Event as the default type, mobile-friendly type tabs, and a responsive presentation card preview._
+_Simplified presentation card flow with icon-based destination selection, Generate step, and responsive preview/export cards._
 
 ## Design Philosophy
 
