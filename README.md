@@ -7,6 +7,12 @@ A lightweight event QR generator for quick sharing during events, meetups, and c
 ![React](https://img.shields.io/badge/React-19.0-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6)
 
+## Screenshot
+
+![Updated QR Studio interface](public/screenshots/qr-code-preview-updated.png)
+
+_Adaptive QR workflow with Event as the default type, mobile-friendly type tabs, and a responsive presentation card preview._
+
 ## Design Philosophy
 
 **Less is More.** QR Studio uses an editorial event aesthetic: serif headlines, sans UI, black ink on paper, and restrained accent color.
