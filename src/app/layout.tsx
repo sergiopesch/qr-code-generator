@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Instrument_Sans, Instrument_Serif } from 'next/font/google';
-import { eventConfig } from '@/config/event';
 import './globals.css';
 
 const instrumentSans = Instrument_Sans({
@@ -17,12 +16,12 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: `${eventConfig.appName} | ${eventConfig.eventName}`,
-  description: eventConfig.heroDescription,
-  keywords: ['QR code', 'meetup card', 'conference card', 'event QR', 'Next.js'],
+  title: 'QR Studio',
+  description: 'Create a simple QR presentation card for your website, X profile, LinkedIn, or any link.',
+  keywords: ['QR code', 'presentation card', 'profile QR', 'website QR', 'Next.js'],
   authors: [{ name: 'Sergio Peschiera' }],
   manifest: '/manifest.webmanifest',
-  applicationName: eventConfig.appName,
+  applicationName: 'QR Studio',
   formatDetection: {
     telephone: false,
     email: false,
@@ -30,15 +29,15 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: eventConfig.appName,
+    title: 'QR Studio',
     statusBarStyle: 'black-translucent',
   },
   icons: {
     icon: '/icon.svg',
   },
   openGraph: {
-    title: `${eventConfig.appName} | ${eventConfig.eventName}`,
-    description: eventConfig.heroDescription,
+    title: 'QR Studio',
+    description: 'Create a simple QR presentation card for your website, X profile, LinkedIn, or any link.',
     type: 'website',
   },
 };
