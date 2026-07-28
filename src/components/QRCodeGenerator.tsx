@@ -174,7 +174,7 @@ function buildDestination(linkType: LinkType, websiteUrl: string, xHandle: strin
   }
 }
 
-function getDestinationLabel(linkType: LinkType, destination: string) {
+function getDestinationLabel(linkType: LinkType) {
   switch (linkType) {
     case 'x':
       return 'X profile';
@@ -235,7 +235,7 @@ export function QRCodeGenerator() {
 
   const errorCorrectionLevel: ErrorCorrectionLevel = logo ? 'H' : 'M';
   const destination = buildDestination(linkType, websiteUrl, xHandle, linkedinHandle, customUrl);
-  const destinationLabel = getDestinationLabel(linkType, destination);
+  const destinationLabel = getDestinationLabel(linkType);
   const scanAssessment = assessQRScanSafety({
     dotColor,
     backgroundColor,
